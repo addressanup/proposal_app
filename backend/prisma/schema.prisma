@@ -1,0 +1,690 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with authentication support
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  isEmailVerified   Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+
+  // MFA
+  mfaEnabled        Boolean   @default(false)
+  mfaSecret         String?
+
+  // Session management
+  refreshTokens     RefreshToken[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  organizationMembers OrganizationMember[]
+  proposals         Proposal[]
+  comments          Comment[]
+  proposalVersions  ProposalVersion[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  proposalDocuments ProposalDocument[]
+  shareLinksCreated ProposalShareLink[]
+  initiatedConnections Connection[] @relation("InitiatedConnections")
+  receivedConnections Connection[] @relation("ReceivedConnections")
+  messages          Message[]
+  messageReads      MessageRead[]
+  signatureRequests SignatureRequest[]
+
+  @@index([email])
+}
+
+// Organization model for multi-tenancy
+model Organization {
+  id                String    @id @default(cuid())
+  name              String
+  slug              String    @unique
+  description       String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  members           OrganizationMember[]
+  proposals         Proposal[]
+
+  @@index([slug])
+}
+
+// Junction table for users and organizations with roles
+model OrganizationMember {
+  id                String    @id @default(cuid())
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  role              Role      @default(VIEWER)
+
+  joinedAt          DateTime  @default(now())
+  invitedBy         String?
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  EDITOR
+  COMMENTATOR
+  VIEWER
+}
+
+// Proposal document
+model Proposal {
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  content           String    @db.Text
+  status            ProposalStatus @default(DRAFT)
+
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  creatorId         String
+  creator           User      @relation(fields: [creatorId], references: [id])
+
+  // Document metadata
+  fileUrl           String?
+  fileName          String?
+  fileSize          Int?
+  fileMimeType      String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  versions          ProposalVersion[]
+  comments          Comment[]
+  collaborators     ProposalCollaborator[]
+  signatures        Signature[]
+  documents         ProposalDocument[]
+  shareLinks        ProposalShareLink[]
+  connections       Connection[]
+  messages          Message[]
+  signatureRequests SignatureRequest[]
+
+  @@index([organizationId])
+  @@index([creatorId])
+  @@index([status])
+}
+
+enum ProposalStatus {
+  DRAFT
+  PENDING_REVIEW
+  UNDER_NEGOTIATION
+  FINAL
+  SIGNED
+  ARCHIVED
+  REJECTED
+}
+
+// Version control for proposals
+model ProposalVersion {
+  id                String    @id @default(cuid())
+  versionNumber     Int
+  content           String    @db.Text
+  changeDescription String?
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  createdById       String
+  createdBy         User      @relation(fields: [createdById], references: [id])
+
+  createdAt         DateTime  @default(now())
+
+  @@unique([proposalId, versionNumber])
+  @@index([proposalId])
+}
+
+// Proposal collaborators with specific permissions
+model ProposalCollaborator {
+  id                String    @id @default(cuid())
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  email             String
+  permission        CollaboratorPermission @default(VIEWER)
+
+  addedAt           DateTime  @default(now())
+  addedBy           String
+
+  @@unique([proposalId, email])
+  @@index([proposalId])
+  @@index([email])
+}
+
+enum CollaboratorPermission {
+  OWNER
+  EDITOR
+  COMMENTATOR
+  VIEWER
+}
+
+// Comments and discussions
+model Comment {
+  id                String    @id @default(cuid())
+  content           String    @db.Text
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  authorId          String
+  author            User      @relation(fields: [authorId], references: [id])
+
+  // For threaded comments
+  parentId          String?
+  parent            Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies           Comment[] @relation("CommentReplies")
+
+  // Position in document (optional - for inline comments)
+  anchorText        String?
+  anchorPosition    Int?
+
+  isResolved        Boolean   @default(false)
+  resolvedAt        DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([proposalId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// Digital signatures
+model Signature {
+  id                String    @id @default(cuid())
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  signerEmail       String
+  signerName        String
+  signatureType     SignatureType @default(SIMPLE)
+
+  // Signature data
+  signatureData     String?   // Base64 encoded signature or certificate
+
+  // Audit trail
+  ipAddress         String
+  userAgent         String
+  geoLocation       String?
+
+  signedAt          DateTime  @default(now())
+
+  // Document hash at time of signing
+  documentHash      String
+
+  @@index([proposalId])
+  @@index([signerEmail])
+}
+
+enum SignatureType {
+  SIMPLE           // Simple electronic signature
+  ADVANCED         // Advanced electronic signature with certificate
+  QUALIFIED        // Qualified electronic signature
+}
+
+// Audit log for compliance
+model AuditLog {
+  id                String    @id @default(cuid())
+
+  userId            String?
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action            String
+  resourceType      String
+  resourceId        String?
+
+  ipAddress         String
+  userAgent         String
+
+  metadata          Json?
+
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+}
+
+// Refresh tokens for JWT
+model RefreshToken {
+  id                String    @id @default(cuid())
+  token             String    @unique
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// Notifications
+model Notification {
+  id                String    @id @default(cuid())
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type              NotificationType
+  title             String
+  message           String
+
+  isRead            Boolean   @default(false)
+  readAt            DateTime?
+
+  // Link to relevant resource
+  resourceType      String?
+  resourceId        String?
+
+  createdAt         DateTime  @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  PROPOSAL_CREATED
+  PROPOSAL_UPDATED
+  PROPOSAL_SIGNED
+  COMMENT_ADDED
+  COMMENT_REPLY
+  MENTION
+  INVITATION
+  STATUS_CHANGE
+  SHARE_LINK_ACCESSED
+  CONNECTION_ESTABLISHED
+}
+
+// Document management for proposals
+model ProposalDocument {
+  id                String    @id @default(cuid())
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  // File information
+  originalFileName  String
+  storedFileName    String
+  fileUrl           String
+  thumbnailUrl      String?
+  fileSize          Int
+  mimeType          String
+  pageCount         Int?
+
+  // Processing status
+  processingStatus  ProcessingStatus @default(PENDING)
+  ocrText           String?   @db.Text
+
+  // Security
+  encryptionKey     String?
+  virusScanStatus   ScanStatus @default(PENDING)
+  virusScanResult   String?
+
+  uploadedById      String
+  uploadedBy        User      @relation(fields: [uploadedById], references: [id])
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([proposalId])
+  @@index([uploadedById])
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+// Shareable links for proposals
+model ProposalShareLink {
+  id                String    @id @default(cuid())
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  // Link configuration
+  token             String    @unique
+  linkType          ShareLinkType @default(EMAIL_SPECIFIC)
+
+  // Access control
+  allowedEmails     String[]  // Array of authorized emails
+  requiresPassword  Boolean   @default(false)
+  passwordHash      String?
+
+  // Expiration
+  expiresAt         DateTime?
+  isOneTime         Boolean   @default(false)
+  hasBeenAccessed   Boolean   @default(false)
+  accessedAt        DateTime?
+
+  // Permissions
+  canComment        Boolean   @default(true)
+  canDownload       Boolean   @default(true)
+  canSign           Boolean   @default(false)
+
+  // Tracking
+  viewCount         Int       @default(0)
+  lastViewedAt      DateTime?
+
+  // Metadata
+  customMessage     String?   @db.Text
+  recipientName     String?
+  recipientEmail    String?
+
+  createdById       String
+  createdBy         User      @relation(fields: [createdById], references: [id])
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  accessLogs        LinkAccessLog[]
+
+  @@index([token])
+  @@index([proposalId])
+  @@index([recipientEmail])
+  @@index([createdById])
+}
+
+enum ShareLinkType {
+  PUBLIC
+  EMAIL_SPECIFIC
+  ONE_TIME
+  PASSWORD_PROTECTED
+}
+
+// Access logging for share links
+model LinkAccessLog {
+  id                String    @id @default(cuid())
+
+  shareLinkId       String
+  shareLink         ProposalShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+  accessedBy        String?   // Email or User ID if logged in
+  ipAddress         String
+  userAgent         String
+  geoLocation       String?
+
+  action            LinkAction
+  accessedAt        DateTime  @default(now())
+
+  @@index([shareLinkId])
+  @@index([accessedAt])
+}
+
+enum LinkAction {
+  VIEWED
+  DOWNLOADED
+  COMMENTED
+  SIGNED
+  AUTHENTICATED
+}
+
+// Connections between users
+model Connection {
+  id                String    @id @default(cuid())
+
+  // Parties involved
+  initiatorId       String
+  initiator         User      @relation("InitiatedConnections", fields: [initiatorId], references: [id], onDelete: Cascade)
+
+  recipientId       String
+  recipient         User      @relation("ReceivedConnections", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  // Connection context
+  connectionType    ConnectionType
+  status            ConnectionStatus @default(ACTIVE)
+
+  // Origin tracking
+  originProposalId  String?
+  originProposal    Proposal? @relation(fields: [originProposalId], references: [id], onDelete: SetNull)
+
+  // Metadata
+  notes             String?   @db.Text
+  tags              String[]
+
+  // Lifecycle
+  connectedAt       DateTime  @default(now())
+  lastInteraction   DateTime?
+
+  // Relations
+  messages          Message[]
+
+  @@unique([initiatorId, recipientId])
+  @@index([initiatorId])
+  @@index([recipientId])
+  @@index([status])
+  @@index([originProposalId])
+}
+
+enum ConnectionType {
+  SAME_ORGANIZATION
+  CROSS_ORGANIZATION
+  EXTERNAL_COLLABORATOR
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+  ARCHIVED
+}
+
+// Messages between connected users
+model Message {
+  id                String    @id @default(cuid())
+
+  connectionId      String
+  connection        Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  proposalId        String?
+  proposal          Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+
+  senderId          String
+  sender            User      @relation(fields: [senderId], references: [id])
+
+  content           String    @db.Text
+  messageType       MessageType @default(TEXT)
+
+  // Attachments
+  attachments       String[]  // URLs to attached files
+
+  // Message status
+  isEdited          Boolean   @default(false)
+  editedAt          DateTime?
+  isDeleted         Boolean   @default(false)
+  deletedAt         DateTime?
+
+  // Read receipts
+  readBy            MessageRead[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([connectionId])
+  @@index([proposalId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  PROPOSAL_UPDATE
+  STATUS_CHANGE
+}
+
+// Message read receipts
+model MessageRead {
+  id                String    @id @default(cuid())
+
+  messageId         String
+  message           Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  readAt            DateTime  @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
+// Signature request workflow
+model SignatureRequest {
+  id                String    @id @default(cuid())
+
+  proposalId        String
+  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  // Signature configuration
+  signatureType     SignatureType
+  signingOrder      SigningOrder @default(SEQUENTIAL)
+
+  // Signers
+  signers           SignatureRequirement[]
+
+  // Status tracking
+  status            SignatureRequestStatus @default(PENDING)
+  completedAt       DateTime?
+
+  // Final document
+  signedDocumentUrl String?
+  certificateUrl    String?
+  blockchainHash    String?   // Optional blockchain notarization
+
+  // Reminders
+  lastReminderSent  DateTime?
+
+  createdById       String
+  createdBy         User      @relation(fields: [createdById], references: [id])
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  reminderSchedule  ReminderSchedule?
+
+  @@index([proposalId])
+  @@index([status])
+  @@index([createdById])
+}
+
+enum SigningOrder {
+  SEQUENTIAL      // Sign in specific order
+  PARALLEL        // All can sign simultaneously
+}
+
+enum SignatureRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+// Individual signer requirements
+model SignatureRequirement {
+  id                String    @id @default(cuid())
+
+  requestId         String
+  request           SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  signerEmail       String
+  signerName        String
+  signingOrder      Int       @default(1)
+
+  // Status
+  status            SignerStatus @default(PENDING)
+  signedAt          DateTime?
+  declinedAt        DateTime?
+  declineReason     String?
+
+  // Authentication
+  authMethod        AuthMethod
+  authToken         String?   // For email verification
+
+  // Signature placement
+  signaturePageNumber Int?
+  signatureX        Float?
+  signatureY        Float?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([requestId])
+  @@index([signerEmail])
+  @@index([status])
+}
+
+enum SignerStatus {
+  PENDING
+  SENT
+  VIEWED
+  SIGNED
+  DECLINED
+}
+
+enum AuthMethod {
+  EMAIL_VERIFICATION
+  TWO_FACTOR_AUTH
+  SMS_OTP
+  BIOMETRIC
+}
+
+// Reminder schedule for signature requests
+model ReminderSchedule {
+  id                String    @id @default(cuid())
+
+  requestId         String    @unique
+  request           SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  reminderDays      Int[]     // Days after initial send to remind [3, 7, 14]
+  finalReminderBeforeExpiry Int?  // Hours before expiration
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "1. Everything allowed.",
+      "Bash(npx create-react-app . --template typescript)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npx tailwindcss@latest init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
