@@ -2,7 +2,9 @@ import prisma from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { auditLog } from './audit.service';
 import { sendSignatureRequestEmail, sendSignatureCompletedEmail, sendSignatureReminderEmail } from './email.service';
+import { getProposalForSignature, hasActiveSignatureRequests } from './proposal.service';
 import { SignatureType, SigningOrder, SignatureRequestStatus, SignerStatus, AuthMethod } from '@prisma/client';
+import { canCreateSignatureRequest } from '../utils/validators';
 import crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 
@@ -33,50 +35,24 @@ export const createSignatureRequest = async (
 ) => {
   const { proposalId, signatureType, signingOrder, signers, reminderDays, expirationDays } = data;
 
-  // Validate proposal exists and is in correct status
-  const proposal = await prisma.proposal.findUnique({
-    where: { id: proposalId },
-    include: {
-      organization: true,
-      creator: true
-    }
-  });
+  // Use integrated proposal service to validate and get proposal
+  const proposal = await getProposalForSignature(proposalId, createdById);
 
-  if (!proposal) {
-    throw new AppError('Proposal not found', 404);
+  // Validate proposal status using business rule validator
+  if (!canCreateSignatureRequest(proposal.status)) {
+    throw new AppError(
+      `Signature requests can only be created for proposals in FINAL status. Current status: ${proposal.status}`,
+      400
+    );
   }
 
-  // Check if user has permission
-  const membership = await prisma.organizationMember.findUnique({
-    where: {
-      userId_organizationId: {
-        userId: createdById,
-        organizationId: proposal.organizationId
-      }
-    }
-  });
-
-  if (!membership) {
-    throw new AppError('Access denied', 403);
-  }
-
-  // Proposal should be in FINAL status before signature request
-  if (proposal.status !== 'FINAL') {
-    throw new AppError('Proposal must be in FINAL status before requesting signatures', 400);
-  }
-
-  // Check if there's already an active signature request
-  const existingRequest = await prisma.signatureRequest.findFirst({
-    where: {
-      proposalId,
-      status: {
-        in: [SignatureRequestStatus.PENDING, SignatureRequestStatus.IN_PROGRESS]
-      }
-    }
-  });
-
-  if (existingRequest) {
-    throw new AppError('An active signature request already exists for this proposal', 400);
+  // Check if there's already an active signature request using helper
+  const hasActive = await hasActiveSignatureRequests(proposalId);
+  if (hasActive) {
+    throw new AppError(
+      'An active signature request already exists for this proposal. Please cancel it before creating a new one.',
+      400
+    );
   }
 
   // Generate document hash for tamper detection
