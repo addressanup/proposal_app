@@ -12,6 +12,8 @@ import notificationRoutes from './routes/notification.routes';
 import documentRoutes from './routes/document.routes';
 import sharingRoutes from './routes/sharing.routes';
 import connectionRoutes from './routes/connection.routes';
+import versionRoutes from './routes/version.routes';
+import signatureRoutes from './routes/signature.routes';
 
 // Load environment variables
 dotenv.config();
@@ -49,6 +51,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api', documentRoutes); // Handles /api/documents and /api/proposals/:id/documents
 app.use('/api/sharing', sharingRoutes);
 app.use('/api/connections', connectionRoutes);
+app.use('/api', versionRoutes); // Handles /api/proposals/:id/versions
+app.use('/api', signatureRoutes); // Handles /api/signature-requests and /api/sign
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

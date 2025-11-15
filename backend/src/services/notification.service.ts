@@ -321,3 +321,42 @@ export const notifyMention = async (userId: string, mentionedBy: string, proposa
     resourceId: proposalId,
   });
 };
+
+export const notifyVersionCreated = async (
+  proposalId: string,
+  versionNumber: number,
+  createdById: string,
+  changeDescription: string
+) => {
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: {
+      organization: {
+        include: {
+          members: true,
+        },
+      },
+    },
+  });
+
+  if (!proposal) return;
+
+  const creator = await prisma.user.findUnique({
+    where: { id: createdById },
+  });
+
+  if (!creator) return;
+
+  const notifications = proposal.organization.members
+    .filter((member) => member.userId !== createdById)
+    .map((member) => ({
+      userId: member.userId,
+      type: NotificationType.PROPOSAL_UPDATED,
+      title: `New Version: ${proposal.title}`,
+      message: `${creator.firstName} ${creator.lastName} created version ${versionNumber}: ${changeDescription}`,
+      resourceType: 'proposal',
+      resourceId: proposalId,
+    }));
+
+  await createBulkNotifications(notifications);
+};
