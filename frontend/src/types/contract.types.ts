@@ -1,5 +1,8 @@
 import { ContractType, ContractCategory } from './template.types';
 
+// Re-export types from template.types for convenience
+export { ContractType, ContractCategory } from './template.types';
+
 export enum ContractStatus {
   DRAFT = 'DRAFT',
   PENDING_APPROVAL = 'PENDING_APPROVAL',
@@ -67,6 +70,7 @@ export interface Counterparty {
   address?: string;
   isPrimary: boolean;
   status: string;
+  signedAt?: string;
 }
 
 export interface Obligation {
@@ -114,6 +118,7 @@ export interface Contract {
     lastName: string;
   };
   contractValue?: number;
+  totalValue?: number; // Alias for contractValue
   currency: string;
   effectiveDate?: string;
   expirationDate?: string;
@@ -137,12 +142,12 @@ export interface Contract {
 
 export interface CreateContractFromTemplateData {
   templateId: string;
-  organizationId: string;
+  organizationId?: string;
   title: string;
   description?: string;
   fieldValues: Record<string, any>;
-  contractType: ContractType;
-  category: ContractCategory;
+  contractType?: ContractType;
+  category?: ContractCategory;
   contractValue?: number;
   currency?: string;
   effectiveDate?: string;

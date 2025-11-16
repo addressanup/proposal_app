@@ -36,7 +36,7 @@ interface RegisterData {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,

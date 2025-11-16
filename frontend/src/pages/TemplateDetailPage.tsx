@@ -47,12 +47,12 @@ export default function TemplateDetailPage() {
       // Generate sample data for preview
       const sampleData: Record<string, string> = {};
       if (template?.requiredFields) {
-        template.requiredFields.forEach((field) => {
+        template.requiredFields.forEach((field: string) => {
           sampleData[field] = `[Sample ${field}]`;
         });
       }
       if (template?.optionalFields) {
-        template.optionalFields.forEach((field) => {
+        template.optionalFields.forEach((field: string) => {
           sampleData[field] = `[Sample ${field}]`;
         });
       }
@@ -68,10 +68,11 @@ export default function TemplateDetailPage() {
   };
 
   const handleClone = async () => {
-    if (!id) return;
+    if (!id || !template) return;
 
     try {
-      const response = await templateService.clone(id);
+      const newName = `${template.name} (Copy)`;
+      const response = await templateService.clone(id, newName);
       navigate(`/templates/${response.data.id}`);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to clone template');
@@ -173,7 +174,7 @@ export default function TemplateDetailPage() {
                   Required Fields ({template.requiredFields.length})
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {template.requiredFields.map((field, index) => (
+                  {template.requiredFields.map((field: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
@@ -193,7 +194,7 @@ export default function TemplateDetailPage() {
                   Optional Fields ({template.optionalFields.length})
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {template.optionalFields.map((field, index) => (
+                  {template.optionalFields.map((field: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"

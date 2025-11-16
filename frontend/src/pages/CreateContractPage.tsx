@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { templateService } from '../services/template.service';
 import { contractService } from '../services/contract.service';
-import { Template, ContractType } from '../types/template.types';
+import { Template } from '../types/template.types';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Loading from '../components/common/Loading';
@@ -62,12 +62,12 @@ export default function CreateContractPage() {
     // Initialize field values
     const initialValues: Record<string, string> = {};
     if (template.requiredFields) {
-      template.requiredFields.forEach((field) => {
+      template.requiredFields.forEach((field: string) => {
         initialValues[field] = '';
       });
     }
     if (template.optionalFields) {
-      template.optionalFields.forEach((field) => {
+      template.optionalFields.forEach((field: string) => {
         initialValues[field] = '';
       });
     }
@@ -93,7 +93,7 @@ export default function CreateContractPage() {
     // Validate required fields
     if (selectedTemplate.requiredFields) {
       const missingFields = selectedTemplate.requiredFields.filter(
-        (field) => !fieldValues[field] || fieldValues[field].trim() === ''
+        (field: string) => !fieldValues[field] || fieldValues[field].trim() === ''
       );
       if (missingFields.length > 0) {
         setError(`Please fill in required fields: ${missingFields.join(', ')}`);
@@ -112,9 +112,9 @@ export default function CreateContractPage() {
         templateId: selectedTemplate.id,
         title,
         description: description || undefined,
-        effectiveDate: effectiveDate ? new Date(effectiveDate) : undefined,
-        expirationDate: expirationDate ? new Date(expirationDate) : undefined,
-        totalValue: totalValue ? parseFloat(totalValue) : undefined,
+        effectiveDate: effectiveDate || undefined,
+        expirationDate: expirationDate || undefined,
+        contractValue: totalValue ? parseFloat(totalValue) : undefined,
         fieldValues,
       });
 
@@ -297,7 +297,7 @@ export default function CreateContractPage() {
                     Required Template Fields
                   </h3>
                   <div className="space-y-4">
-                    {selectedTemplate.requiredFields.map((field) => (
+                    {selectedTemplate.requiredFields.map((field: string) => (
                       <Input
                         key={field}
                         label={field}
@@ -318,7 +318,7 @@ export default function CreateContractPage() {
                     Optional Template Fields
                   </h3>
                   <div className="space-y-4">
-                    {selectedTemplate.optionalFields.map((field) => (
+                    {selectedTemplate.optionalFields.map((field: string) => (
                       <Input
                         key={field}
                         label={field}
