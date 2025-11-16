@@ -12,74 +12,85 @@ datasource db {
 
 // User model with authentication support
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  passwordHash      String
-  firstName         String
-  lastName          String
-  isEmailVerified   Boolean   @default(false)
-  emailVerifiedAt   DateTime?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  isEmailVerified Boolean   @default(false)
+  emailVerifiedAt DateTime?
 
   // MFA
-  mfaEnabled        Boolean   @default(false)
-  mfaSecret         String?
+  mfaEnabled Boolean @default(false)
+  mfaSecret  String?
 
   // Session management
-  refreshTokens     RefreshToken[]
+  refreshTokens RefreshToken[]
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  lastLoginAt       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
 
   // Relations
-  organizationMembers OrganizationMember[]
-  proposals         Proposal[]
-  comments          Comment[]
-  proposalVersions  ProposalVersion[]
-  auditLogs         AuditLog[]
-  notifications     Notification[]
-  proposalDocuments ProposalDocument[]
-  shareLinksCreated ProposalShareLink[]
-  initiatedConnections Connection[] @relation("InitiatedConnections")
-  receivedConnections Connection[] @relation("ReceivedConnections")
-  messages          Message[]
-  messageReads      MessageRead[]
-  signatureRequests SignatureRequest[]
+  organizationMembers  OrganizationMember[]
+  proposals            Proposal[]
+  comments             Comment[]
+  proposalVersions     ProposalVersion[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  proposalDocuments    ProposalDocument[]
+  shareLinksCreated    ProposalShareLink[]
+  initiatedConnections Connection[]         @relation("InitiatedConnections")
+  receivedConnections  Connection[]         @relation("ReceivedConnections")
+  messages             Message[]
+  messageReads         MessageRead[]
+  signatureRequests    SignatureRequest[]
+
+  // Phase 1: CLM Extensions
+  contracts        Contract[]
+  contractVersions ContractVersion[]
+  templatesCreated ContractTemplate[]
+  obligations      Obligation[]
+  amendments       Amendment[]
 
   @@index([email])
 }
 
 // Organization model for multi-tenancy
 model Organization {
-  id                String    @id @default(cuid())
-  name              String
-  slug              String    @unique
-  description       String?
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  members           OrganizationMember[]
-  proposals         Proposal[]
+  members   OrganizationMember[]
+  proposals Proposal[]
+
+  // Phase 1: CLM Extensions
+  contracts Contract[]
+  templates ContractTemplate[]
 
   @@index([slug])
 }
 
 // Junction table for users and organizations with roles
 model OrganizationMember {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  role              Role      @default(VIEWER)
+  role Role @default(VIEWER)
 
-  joinedAt          DateTime  @default(now())
-  invitedBy         String?
+  joinedAt  DateTime @default(now())
+  invitedBy String?
 
   @@unique([userId, organizationId])
   @@index([userId])
@@ -96,26 +107,26 @@ enum Role {
 
 // Proposal document
 model Proposal {
-  id                String    @id @default(cuid())
-  title             String
-  description       String?
-  content           String    @db.Text
-  status            ProposalStatus @default(DRAFT)
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  content     String         @db.Text
+  status      ProposalStatus @default(DRAFT)
 
-  organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  creatorId         String
-  creator           User      @relation(fields: [creatorId], references: [id])
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id])
 
   // Document metadata
-  fileUrl           String?
-  fileName          String?
-  fileSize          Int?
-  fileMimeType      String?
+  fileUrl      String?
+  fileName     String?
+  fileSize     Int?
+  fileMimeType String?
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   versions          ProposalVersion[]
@@ -145,18 +156,18 @@ enum ProposalStatus {
 
 // Version control for proposals
 model ProposalVersion {
-  id                String    @id @default(cuid())
+  id                String  @id @default(cuid())
   versionNumber     Int
-  content           String    @db.Text
+  content           String  @db.Text
   changeDescription String?
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  createdById       String
-  createdBy         User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  createdAt         DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([proposalId, versionNumber])
   @@index([proposalId])
@@ -164,16 +175,16 @@ model ProposalVersion {
 
 // Proposal collaborators with specific permissions
 model ProposalCollaborator {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  email             String
-  permission        CollaboratorPermission @default(VIEWER)
+  email      String
+  permission CollaboratorPermission @default(VIEWER)
 
-  addedAt           DateTime  @default(now())
-  addedBy           String
+  addedAt DateTime @default(now())
+  addedBy String
 
   @@unique([proposalId, email])
   @@index([proposalId])
@@ -189,29 +200,29 @@ enum CollaboratorPermission {
 
 // Comments and discussions
 model Comment {
-  id                String    @id @default(cuid())
-  content           String    @db.Text
+  id      String @id @default(cuid())
+  content String @db.Text
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  authorId          String
-  author            User      @relation(fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   // For threaded comments
-  parentId          String?
-  parent            Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies           Comment[] @relation("CommentReplies")
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
 
   // Position in document (optional - for inline comments)
-  anchorText        String?
-  anchorPosition    Int?
+  anchorText     String?
+  anchorPosition Int?
 
-  isResolved        Boolean   @default(false)
-  resolvedAt        DateTime?
+  isResolved Boolean   @default(false)
+  resolvedAt DateTime?
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([proposalId])
   @@index([authorId])
@@ -220,55 +231,55 @@ model Comment {
 
 // Digital signatures
 model Signature {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  signerEmail       String
-  signerName        String
-  signatureType     SignatureType @default(SIMPLE)
+  signerEmail   String
+  signerName    String
+  signatureType SignatureType @default(SIMPLE)
 
   // Signature data
-  signatureData     String?   // Base64 encoded signature or certificate
+  signatureData String? // Base64 encoded signature or certificate
 
   // Audit trail
-  ipAddress         String
-  userAgent         String
-  geoLocation       String?
+  ipAddress   String
+  userAgent   String
+  geoLocation String?
 
-  signedAt          DateTime  @default(now())
+  signedAt DateTime @default(now())
 
   // Document hash at time of signing
-  documentHash      String
+  documentHash String
 
   @@index([proposalId])
   @@index([signerEmail])
 }
 
 enum SignatureType {
-  SIMPLE           // Simple electronic signature
-  ADVANCED         // Advanced electronic signature with certificate
-  QUALIFIED        // Qualified electronic signature
+  SIMPLE // Simple electronic signature
+  ADVANCED // Advanced electronic signature with certificate
+  QUALIFIED // Qualified electronic signature
 }
 
 // Audit log for compliance
 model AuditLog {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId            String?
-  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  action            String
-  resourceType      String
-  resourceId        String?
+  action       String
+  resourceType String
+  resourceId   String?
 
-  ipAddress         String
-  userAgent         String
+  ipAddress String
+  userAgent String
 
-  metadata          Json?
+  metadata Json?
 
-  createdAt         DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([resourceType, resourceId])
@@ -277,14 +288,14 @@ model AuditLog {
 
 // Refresh tokens for JWT
 model RefreshToken {
-  id                String    @id @default(cuid())
-  token             String    @unique
+  id    String @id @default(cuid())
+  token String @unique
 
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  expiresAt         DateTime
-  createdAt         DateTime  @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([token])
@@ -292,23 +303,23 @@ model RefreshToken {
 
 // Notifications
 model Notification {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type              NotificationType
-  title             String
-  message           String
+  type    NotificationType
+  title   String
+  message String
 
-  isRead            Boolean   @default(false)
-  readAt            DateTime?
+  isRead Boolean   @default(false)
+  readAt DateTime?
 
   // Link to relevant resource
-  resourceType      String?
-  resourceId        String?
+  resourceType String?
+  resourceId   String?
 
-  createdAt         DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, isRead])
   @@index([createdAt])
@@ -329,34 +340,34 @@ enum NotificationType {
 
 // Document management for proposals
 model ProposalDocument {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   // File information
-  originalFileName  String
-  storedFileName    String
-  fileUrl           String
-  thumbnailUrl      String?
-  fileSize          Int
-  mimeType          String
-  pageCount         Int?
+  originalFileName String
+  storedFileName   String
+  fileUrl          String
+  thumbnailUrl     String?
+  fileSize         Int
+  mimeType         String
+  pageCount        Int?
 
   // Processing status
-  processingStatus  ProcessingStatus @default(PENDING)
-  ocrText           String?   @db.Text
+  processingStatus ProcessingStatus @default(PENDING)
+  ocrText          String?          @db.Text
 
   // Security
-  encryptionKey     String?
-  virusScanStatus   ScanStatus @default(PENDING)
-  virusScanResult   String?
+  encryptionKey   String?
+  virusScanStatus ScanStatus @default(PENDING)
+  virusScanResult String?
 
-  uploadedById      String
-  uploadedBy        User      @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([proposalId])
   @@index([uploadedById])
@@ -378,48 +389,48 @@ enum ScanStatus {
 
 // Shareable links for proposals
 model ProposalShareLink {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   // Link configuration
-  token             String    @unique
-  linkType          ShareLinkType @default(EMAIL_SPECIFIC)
+  token    String        @unique
+  linkType ShareLinkType @default(EMAIL_SPECIFIC)
 
   // Access control
-  allowedEmails     String[]  // Array of authorized emails
-  requiresPassword  Boolean   @default(false)
-  passwordHash      String?
+  allowedEmails    String[] // Array of authorized emails
+  requiresPassword Boolean  @default(false)
+  passwordHash     String?
 
   // Expiration
-  expiresAt         DateTime?
-  isOneTime         Boolean   @default(false)
-  hasBeenAccessed   Boolean   @default(false)
-  accessedAt        DateTime?
+  expiresAt       DateTime?
+  isOneTime       Boolean   @default(false)
+  hasBeenAccessed Boolean   @default(false)
+  accessedAt      DateTime?
 
   // Permissions
-  canComment        Boolean   @default(true)
-  canDownload       Boolean   @default(true)
-  canSign           Boolean   @default(false)
+  canComment  Boolean @default(true)
+  canDownload Boolean @default(true)
+  canSign     Boolean @default(false)
 
   // Tracking
-  viewCount         Int       @default(0)
-  lastViewedAt      DateTime?
+  viewCount    Int       @default(0)
+  lastViewedAt DateTime?
 
   // Metadata
-  customMessage     String?   @db.Text
-  recipientName     String?
-  recipientEmail    String?
+  customMessage  String? @db.Text
+  recipientName  String?
+  recipientEmail String?
 
-  createdById       String
-  createdBy         User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  accessLogs        LinkAccessLog[]
+  accessLogs LinkAccessLog[]
 
   @@index([token])
   @@index([proposalId])
@@ -436,18 +447,18 @@ enum ShareLinkType {
 
 // Access logging for share links
 model LinkAccessLog {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  shareLinkId       String
-  shareLink         ProposalShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  shareLinkId String
+  shareLink   ProposalShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
 
-  accessedBy        String?   // Email or User ID if logged in
-  ipAddress         String
-  userAgent         String
-  geoLocation       String?
+  accessedBy  String? // Email or User ID if logged in
+  ipAddress   String
+  userAgent   String
+  geoLocation String?
 
-  action            LinkAction
-  accessedAt        DateTime  @default(now())
+  action     LinkAction
+  accessedAt DateTime   @default(now())
 
   @@index([shareLinkId])
   @@index([accessedAt])
@@ -463,33 +474,33 @@ enum LinkAction {
 
 // Connections between users
 model Connection {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // Parties involved
-  initiatorId       String
-  initiator         User      @relation("InitiatedConnections", fields: [initiatorId], references: [id], onDelete: Cascade)
+  initiatorId String
+  initiator   User   @relation("InitiatedConnections", fields: [initiatorId], references: [id], onDelete: Cascade)
 
-  recipientId       String
-  recipient         User      @relation("ReceivedConnections", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User   @relation("ReceivedConnections", fields: [recipientId], references: [id], onDelete: Cascade)
 
   // Connection context
-  connectionType    ConnectionType
-  status            ConnectionStatus @default(ACTIVE)
+  connectionType ConnectionType
+  status         ConnectionStatus @default(ACTIVE)
 
   // Origin tracking
-  originProposalId  String?
-  originProposal    Proposal? @relation(fields: [originProposalId], references: [id], onDelete: SetNull)
+  originProposalId String?
+  originProposal   Proposal? @relation(fields: [originProposalId], references: [id], onDelete: SetNull)
 
   // Metadata
-  notes             String?   @db.Text
-  tags              String[]
+  notes String?  @db.Text
+  tags  String[]
 
   // Lifecycle
-  connectedAt       DateTime  @default(now())
-  lastInteraction   DateTime?
+  connectedAt     DateTime  @default(now())
+  lastInteraction DateTime?
 
   // Relations
-  messages          Message[]
+  messages Message[]
 
   @@unique([initiatorId, recipientId])
   @@index([initiatorId])
@@ -513,34 +524,34 @@ enum ConnectionStatus {
 
 // Messages between connected users
 model Message {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  connectionId      String
-  connection        Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  connectionId String
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
-  proposalId        String?
-  proposal          Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  proposalId String?
+  proposal   Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
 
-  senderId          String
-  sender            User      @relation(fields: [senderId], references: [id])
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id])
 
-  content           String    @db.Text
-  messageType       MessageType @default(TEXT)
+  content     String      @db.Text
+  messageType MessageType @default(TEXT)
 
   // Attachments
-  attachments       String[]  // URLs to attached files
+  attachments String[] // URLs to attached files
 
   // Message status
-  isEdited          Boolean   @default(false)
-  editedAt          DateTime?
-  isDeleted         Boolean   @default(false)
-  deletedAt         DateTime?
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 
   // Read receipts
-  readBy            MessageRead[]
+  readBy MessageRead[]
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([connectionId])
   @@index([proposalId])
@@ -557,15 +568,15 @@ enum MessageType {
 
 // Message read receipts
 model MessageRead {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  messageId         String
-  message           Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  readAt            DateTime  @default(now())
+  readAt DateTime @default(now())
 
   @@unique([messageId, userId])
   @@index([messageId])
@@ -574,38 +585,38 @@ model MessageRead {
 
 // Signature request workflow
 model SignatureRequest {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  proposalId        String
-  proposal          Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   // Signature configuration
-  signatureType     SignatureType
-  signingOrder      SigningOrder @default(SEQUENTIAL)
+  signatureType SignatureType
+  signingOrder  SigningOrder  @default(SEQUENTIAL)
 
   // Signers
-  signers           SignatureRequirement[]
+  signers SignatureRequirement[]
 
   // Status tracking
-  status            SignatureRequestStatus @default(PENDING)
-  completedAt       DateTime?
+  status      SignatureRequestStatus @default(PENDING)
+  completedAt DateTime?
 
   // Final document
   signedDocumentUrl String?
   certificateUrl    String?
-  blockchainHash    String?   // Optional blockchain notarization
+  blockchainHash    String? // Optional blockchain notarization
 
   // Reminders
-  lastReminderSent  DateTime?
+  lastReminderSent DateTime?
 
-  createdById       String
-  createdBy         User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  reminderSchedule  ReminderSchedule?
+  reminderSchedule ReminderSchedule?
 
   @@index([proposalId])
   @@index([status])
@@ -613,8 +624,8 @@ model SignatureRequest {
 }
 
 enum SigningOrder {
-  SEQUENTIAL      // Sign in specific order
-  PARALLEL        // All can sign simultaneously
+  SEQUENTIAL // Sign in specific order
+  PARALLEL // All can sign simultaneously
 }
 
 enum SignatureRequestStatus {
@@ -628,32 +639,32 @@ enum SignatureRequestStatus {
 
 // Individual signer requirements
 model SignatureRequirement {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  requestId         String
-  request           SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId String
+  request   SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
-  signerEmail       String
-  signerName        String
-  signingOrder      Int       @default(1)
+  signerEmail  String
+  signerName   String
+  signingOrder Int    @default(1)
 
   // Status
-  status            SignerStatus @default(PENDING)
-  signedAt          DateTime?
-  declinedAt        DateTime?
-  declineReason     String?
+  status        SignerStatus @default(PENDING)
+  signedAt      DateTime?
+  declinedAt    DateTime?
+  declineReason String?
 
   // Authentication
-  authMethod        AuthMethod
-  authToken         String?   // For email verification
+  authMethod AuthMethod
+  authToken  String? // For email verification
 
   // Signature placement
   signaturePageNumber Int?
-  signatureX        Float?
-  signatureY        Float?
+  signatureX          Float?
+  signatureY          Float?
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([requestId])
   @@index([signerEmail])
@@ -677,14 +688,537 @@ enum AuthMethod {
 
 // Reminder schedule for signature requests
 model ReminderSchedule {
-  id                String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  requestId         String    @unique
-  request           SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId String           @unique
+  request   SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
-  reminderDays      Int[]     // Days after initial send to remind [3, 7, 14]
-  finalReminderBeforeExpiry Int?  // Hours before expiration
+  reminderDays              Int[] // Days after initial send to remind [3, 7, 14]
+  finalReminderBeforeExpiry Int? // Hours before expiration
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// PHASE 1: CONTRACT LIFECYCLE MANAGEMENT (CLM) EXTENSIONS
+// ============================================================================
+
+// Contract Model - Extends proposal concept for multi-contract type platform
+model Contract {
+  id String @id @default(cuid())
+
+  // Type & Category
+  contractType ContractType
+  category     ContractCategory
+  subcategory  String?
+
+  // Core Fields
+  title       String
+  description String?        @db.Text
+  content     String         @db.Text
+  status      ContractStatus @default(DRAFT)
+
+  // Template Reference
+  templateId     String?
+  template       ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  templateFields Json? // Populated template fields
+
+  // Parties
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creatorId      String
+  creator        User           @relation(fields: [creatorId], references: [id])
+  counterparties Counterparty[]
+
+  // Financial
+  contractValue Decimal? @db.Decimal(15, 2)
+  currency      String   @default("USD")
+
+  // Dates
+  effectiveDate   DateTime?
+  expirationDate  DateTime?
+  renewalDate     DateTime?
+  terminationDate DateTime?
+
+  // Auto-renewal
+  autoRenew         Boolean @default(false)
+  renewalTermMonths Int?
+  renewalNoticeDays Int?    @default(30)
+
+  // Relationships
+  versions    ContractVersion[]
+  obligations Obligation[]
+  milestones  Milestone[]
+  amendments  Amendment[]
+
+  // Metadata
+  tags         String[]
+  customFields Json?
+  metadata     Json?
+
+  // Audit
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  @@index([organizationId, contractType, status])
+  @@index([effectiveDate, expirationDate])
+  @@index([renewalDate])
+  @@index([creatorId])
+  @@map("contracts")
+}
+
+enum ContractType {
+  EMPLOYMENT
+  OFFER_LETTER
+  NDA
+  VENDOR_SERVICE
+  CONSULTING
+  PARTNERSHIP
+  SALES
+  LEASE
+  IP_LICENSE
+  SUPPLY
+  PROCUREMENT
+  SUBSCRIPTION
+  FREELANCE
+  INTERNSHIP
+  OTHER
+}
+
+enum ContractCategory {
+  EMPLOYMENT_HR
+  VENDOR_SUPPLIER
+  CONSULTING_PROFESSIONAL
+  REAL_ESTATE
+  PARTNERSHIP_COLLABORATION
+  SALES_DISTRIBUTION
+  IP_TECHNOLOGY
+  CONFIDENTIALITY
+  OTHER
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_APPROVAL
+  IN_REVIEW
+  APPROVED
+  PENDING_SIGNATURE
+  PARTIALLY_SIGNED
+  FULLY_EXECUTED
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  RENEWED
+  AMENDED
+  TERMINATED
+  ARCHIVED
+  REJECTED
+  CANCELLED
+}
+
+// Contract Template System
+model ContractTemplate {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+
+  // Classification
+  contractType ContractType
+  category     ContractCategory
+  subcategory  String?
+
+  // Scope
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isGlobal       Boolean       @default(false)
+  isActive       Boolean       @default(true)
+
+  // Version
+  version          Int                @default(1)
+  parentTemplateId String?
+  parentTemplate   ContractTemplate?  @relation("TemplateVersions", fields: [parentTemplateId], references: [id], onDelete: SetNull)
+  versions         ContractTemplate[] @relation("TemplateVersions")
+
+  // Content
+  content   String @db.Text
+  structure Json // Sections, clauses, order
+
+  // Fields
+  requiredFields    Json // Array of field definitions
+  optionalFields    Json
+  conditionalFields Json // Fields with show/hide logic
+
+  // Clauses
+  clauses TemplateClause[]
+
+  // Formatting
+  formatting   Json // Styles, fonts, margins
+  headerFooter Json?
+
+  // Business Rules
+  approvalWorkflow Json? // Approval routing
+  autoActions      Json? // Auto-triggers
+  validationRules  Json?
+
+  // Legal
+  jurisdiction String[]
+  governingLaw String?
+  language     String   @default("en")
+
+  // Usage Analytics
+  usageCount Int       @default(0)
+  lastUsed   DateTime?
+
+  // Metadata
+  tags      String[]
+  industry  String[]
+  createdBy String
+  creator   User     @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  contracts Contract[]
+
+  @@index([organizationId, contractType, isActive])
+  @@index([isGlobal, contractType])
+  @@index([createdBy])
+  @@map("contract_templates")
+}
+
+// Template Clause Library
+model TemplateClause {
+  id         String           @id @default(cuid())
+  templateId String
+  template   ContractTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  // Clause Details
+  name     String
+  category ClauseCategory
+  content  String         @db.Text
+
+  // Positioning
+  section    String // e.g., "Payment Terms"
+  position   Int // Order within section
+  isRequired Boolean @default(false)
+
+  // Alternatives
+  alternatives   Json? // Alternative clause versions
+  fallbackClause String? @db.Text
+
+  // Legal Metadata
+  riskLevel    RiskLevel
+  favorability Favorability // Pro-company, neutral, pro-counterparty
+
+  // Compliance
+  complianceFlags String[]
+  regulatoryRefs  String[]
+
+  // AI Metadata
+  recommendedFor String[] // Contract types
+  keywords       String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([templateId, category])
+  @@index([category])
+  @@map("template_clauses")
+}
+
+enum ClauseCategory {
+  DEFINITIONS
+  SCOPE_OF_WORK
+  PAYMENT_TERMS
+  TERM_DURATION
+  TERMINATION
+  CONFIDENTIALITY
+  IP_RIGHTS
+  WARRANTIES
+  INDEMNIFICATION
+  LIABILITY
+  INSURANCE
+  DISPUTE_RESOLUTION
+  FORCE_MAJEURE
+  COMPLIANCE
+  AMENDMENTS
+  NOTICES
+  GENERAL_PROVISIONS
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Favorability {
+  HIGHLY_FAVORABLE
+  FAVORABLE
+  NEUTRAL
+  UNFAVORABLE
+  HIGHLY_UNFAVORABLE
+}
+
+// Contract Version Control
+model ContractVersion {
+  id                String  @id @default(cuid())
+  versionNumber     Int
+  content           String  @db.Text
+  changeDescription String? @db.Text
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  // Diff metadata
+  contentDiff  String? @db.Text
+  linesAdded   Int?
+  linesRemoved Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([contractId, versionNumber])
+  @@index([contractId])
+  @@index([createdById])
+  @@map("contract_versions")
+}
+
+// Counterparty Model - Contract Parties
+model Counterparty {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  // Organization vs Individual
+  type PartyType
+
+  // Organization Details
+  organizationName   String?
+  registrationNumber String?
+  taxId              String?
+
+  // Individual Details
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
+
+  // Address
+  address Json? // Street, city, state, zip, country
+
+  // Role in Contract
+  role             PartyRole
+  signingAuthority Boolean   @default(false)
+
+  // Background Verification (Phase 4)
+  verified         Boolean   @default(false)
+  verificationDate DateTime?
+  verificationData Json?
+  riskScore        Int? // 0-100
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId])
+  @@index([email])
+  @@map("counterparties")
+}
+
+enum PartyType {
+  ORGANIZATION
+  INDIVIDUAL
+}
+
+enum PartyRole {
+  EMPLOYER
+  EMPLOYEE
+  CONTRACTOR
+  VENDOR
+  SUPPLIER
+  CLIENT
+  PARTNER
+  LANDLORD
+  TENANT
+  LICENSOR
+  LICENSEE
+  BUYER
+  SELLER
+  OTHER
+}
+
+// Obligation Tracking
+model Obligation {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  // Obligation Details
+  type        ObligationType
+  title       String
+  description String?        @db.Text
+
+  // Responsibility
+  responsibleParty ResponsibleParty
+  assignedToId     String?
+  assignedTo       User?            @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Dates
+  dueDate       DateTime
+  completedDate DateTime?
+
+  // Status
+  status   ObligationStatus
+  priority Priority
+
+  // Recurrence
+  isRecurring    Boolean @default(false)
+  recurrenceRule Json? // RRULE format
+
+  // Consequences
+  penaltyForMiss  String?  @db.Text
+  financialImpact Decimal? @db.Decimal(15, 2)
+
+  // Notifications
+  reminderSchedule Json? // When to send reminders
+  notificationSent DateTime?
+
+  // Evidence
+  completionProof String? // File URL
+  notes           String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId, status, dueDate])
+  @@index([assignedToId, status])
+  @@index([dueDate])
+  @@map("obligations")
+}
+
+enum ObligationType {
+  PAYMENT
+  DELIVERABLE
+  REPORT
+  REVIEW
+  COMPLIANCE
+  RENEWAL
+  TERMINATION_NOTICE
+  INSURANCE
+  AUDIT
+  OTHER
+}
+
+enum ResponsibleParty {
+  US
+  COUNTERPARTY
+  BOTH
+  THIRD_PARTY
+}
+
+enum ObligationStatus {
+  UPCOMING
+  DUE_SOON
+  DUE
+  OVERDUE
+  COMPLETED
+  WAIVED
+  DISPUTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Milestone Tracking
+model Milestone {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?         @db.Text
+  targetDate  DateTime
+  actualDate  DateTime?
+  status      MilestoneStatus
+
+  // Payment Linkage
+  paymentAmount Decimal?       @db.Decimal(15, 2)
+  paymentStatus PaymentStatus?
+
+  // Dependencies
+  dependsOn String? // Another milestone ID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId, status])
+  @@index([targetDate])
+  @@map("milestones")
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  NOT_DUE
+  DUE
+  PAID
+  OVERDUE
+  DISPUTED
+}
+
+// Amendment Tracking
+model Amendment {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  amendmentNumber Int
+  title           String
+  description     String @db.Text
+  changes         Json // Structured changes
+
+  effectiveDate DateTime
+  status        AmendmentStatus
+
+  // Approval
+  approvedBy String?
+  approvedAt DateTime?
+
+  // Signature
+  requiresSignature  Boolean @default(true)
+  signatureRequestId String?
+
+  createdBy String
+  creator   User     @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId, amendmentNumber])
+  @@index([status])
+  @@map("amendments")
+}
+
+enum AmendmentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PENDING_SIGNATURE
+  EXECUTED
+  REJECTED
 }
