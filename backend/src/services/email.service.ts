@@ -440,37 +440,67 @@ export const sendCommentNotification = async (
 export const sendSignatureRequestEmail = async (
   signerEmail: string,
   signerName: string,
-  requesterName: string,
   proposalTitle: string,
-  signUrl: string,
-  message?: string
+  requesterName: string,
+  authToken: string
 ): Promise<void> => {
-  const subject = `Signature requested for "${proposalTitle}"`;
+  const signUrl = `${process.env.FRONTEND_URL}/sign/${authToken}`;
+  const subject = `Signature Requested: ${proposalTitle}`;
 
   const html = `
     <!DOCTYPE html>
     <html>
-      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2>Signature Request</h2>
-        <p>Hi ${signerName},</p>
-        <p>
-          <strong>${requesterName}</strong> has requested your signature on the following proposal:
-        </p>
-        <div style="background: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
-          <strong>Proposal:</strong> ${proposalTitle}
-        </div>
-        ${message ? `
-          <div style="background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <strong>Message from ${requesterName}:</strong><br><br>
-            ${message}
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 30px; background: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          .info-box { background: #fff; border-left: 4px solid #4F46E5; padding: 15px; margin: 20px 0; }
+          .legal { background: #fffbeb; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📝 Signature Request</h1>
           </div>
-        ` : ''}
-        <p style="text-align: center;">
-          <a href="${signUrl}" style="background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">Review & Sign</a>
-        </p>
-        <p style="font-size: 14px; color: #666; text-align: center;">
-          Please review the document carefully before signing.
-        </p>
+          <div class="content">
+            <h2>Hello ${signerName},</h2>
+            <p>${requesterName} has requested your signature on a proposal.</p>
+
+            <div class="info-box">
+              <p style="margin: 0;"><strong>Proposal:</strong> ${proposalTitle}</p>
+              <p style="margin: 10px 0 0 0;"><strong>Requested by:</strong> ${requesterName}</p>
+            </div>
+
+            <p>Please review the document carefully and sign if you agree with the terms.</p>
+
+            <div style="text-align: center;">
+              <a href="${signUrl}" class="button">Review & Sign Document</a>
+            </div>
+
+            <div class="legal">
+              <p style="margin: 0; font-size: 13px;">
+                <strong>⚖️ Legal Notice:</strong> This is a legally binding signature request.
+                By signing this document, you are entering into a legal agreement.
+                The Proposal Platform will act as a legal witness to this agreement,
+                maintaining tamper-proof records in compliance with ESIGN Act, UETA, and eIDAS regulations.
+              </p>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #6b7280;">
+              This signature link is unique to you and expires in 30 days.
+              If you have questions, please contact ${requesterName}.
+            </p>
+          </div>
+          <div class="footer">
+            <p>© 2025 Proposal Platform - Secure Digital Signatures</p>
+            <p>This email contains a confidential signature request.</p>
+          </div>
+        </div>
       </body>
     </html>
   `;
@@ -489,33 +519,130 @@ export const sendSignatureReminderEmail = async (
   signerEmail: string,
   signerName: string,
   proposalTitle: string,
-  signUrl: string,
-  daysWaiting: number
+  authToken: string
 ): Promise<void> => {
-  const subject = `Reminder: Signature pending for "${proposalTitle}"`;
+  const signUrl = `${process.env.FRONTEND_URL}/sign/${authToken}`;
+  const subject = `Reminder: Signature Pending - ${proposalTitle}`;
 
   const html = `
     <!DOCTYPE html>
     <html>
-      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2>Signature Reminder</h2>
-        <p>Hi ${signerName},</p>
-        <p>
-          This is a friendly reminder that your signature is still pending for:
-        </p>
-        <div style="background: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
-          <strong>Proposal:</strong> ${proposalTitle}<br>
-          <strong>Waiting for:</strong> ${daysWaiting} days
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 30px; background: #f59e0b; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>⏰ Signature Reminder</h1>
+          </div>
+          <div class="content">
+            <h2>Hello ${signerName},</h2>
+            <p>This is a friendly reminder that your signature is still pending on:</p>
+            <p><strong>${proposalTitle}</strong></p>
+            <p>Please take a moment to review and sign the document.</p>
+            <div style="text-align: center;">
+              <a href="${signUrl}" class="button">Sign Now</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Proposal Platform. All rights reserved.</p>
+          </div>
         </div>
-        <p style="text-align: center;">
-          <a href="${signUrl}" style="background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">Complete Signature</a>
-        </p>
       </body>
     </html>
   `;
 
   await sendEmail({
     to: signerEmail,
+    subject,
+    html
+  });
+};
+
+/**
+ * Send signature completion email
+ */
+export const sendSignatureCompletedEmail = async (
+  recipientEmail: string,
+  recipientName: string,
+  proposalTitle: string,
+  certificateUrl: string,
+  blockchainHash: string
+): Promise<void> => {
+  const subject = `Agreement Completed: ${proposalTitle}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          .success-box { background: #d1fae5; border: 2px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 5px; text-align: center; }
+          .hash-box { background: #fff; border: 1px solid #e5e7eb; padding: 15px; margin: 20px 0; border-radius: 5px; font-family: monospace; font-size: 12px; word-break: break-all; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✅ Agreement Signed & Completed</h1>
+          </div>
+          <div class="content">
+            <h2>Congratulations ${recipientName}!</h2>
+
+            <div class="success-box">
+              <h3 style="margin-top: 0; color: #047857;">All Parties Have Signed</h3>
+              <p style="margin-bottom: 0; font-size: 16px;"><strong>${proposalTitle}</strong></p>
+            </div>
+
+            <p>The agreement has been successfully executed and is now legally binding. All parties have completed their signatures.</p>
+
+            <h3>📋 Legal Record</h3>
+            <p>This agreement is legally binding and has been witnessed by the Proposal Platform in compliance with:</p>
+            <ul>
+              <li>ESIGN Act (United States)</li>
+              <li>UETA (Uniform Electronic Transactions Act)</li>
+              <li>eIDAS (European Union)</li>
+            </ul>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.FRONTEND_URL}${certificateUrl}" class="button">Download Certificate</a>
+            </div>
+
+            <h3>🔒 Blockchain Verification Hash</h3>
+            <p>For tamper-proof verification, this agreement has been registered with the following hash:</p>
+            <div class="hash-box">
+              ${blockchainHash}
+            </div>
+            <p style="font-size: 13px; color: #6b7280;">
+              This hash can be used to verify the authenticity and integrity of the signed document at any time.
+            </p>
+
+            <h3>📁 Your Records</h3>
+            <p>Please keep this email and the certificate for your records. You can access the signed document and certificate at any time from your dashboard.</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 Proposal Platform - Secure Digital Signatures</p>
+            <p>This is a legal notification of completed agreement.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  await sendEmail({
+    to: recipientEmail,
     subject,
     html
   });

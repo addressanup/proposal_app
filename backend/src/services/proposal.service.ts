@@ -2,7 +2,9 @@ import prisma from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { auditLog } from './audit.service';
 import { notifyProposalCreated, notifyProposalUpdated } from './notification.service';
-import { ProposalStatus, Role, CollaboratorPermission } from '@prisma/client';
+import { createVersion } from './version.service';
+import { ProposalStatus, Role, CollaboratorPermission, SignatureRequestStatus } from '@prisma/client';
+import { validateStatusTransition, canUpdateProposal } from '../utils/validators';
 
 interface CreateProposalData {
   title: string;
@@ -229,6 +231,32 @@ export const getProposalById = async (proposalId: string, userId: string) => {
       },
       signatures: {
         orderBy: { signedAt: 'desc' }
+      },
+      signatureRequests: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          signatures: {
+            include: {
+              signer: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            },
+            orderBy: { signingOrder: 'asc' }
+          },
+          createdBy: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          }
+        }
       }
     }
   });
@@ -259,15 +287,33 @@ export const updateProposal = async (
   data: UpdateProposalData,
   userId: string,
   ipAddress: string,
-  userAgent: string
+  userAgent: string,
+  changeDescription?: string
 ) => {
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { organization: true }
+    include: {
+      organization: true,
+      signatureRequests: {
+        where: {
+          status: {
+            in: [SignatureRequestStatus.PENDING, SignatureRequestStatus.IN_PROGRESS]
+          }
+        }
+      }
+    }
   });
 
   if (!proposal) {
     throw new AppError('Proposal not found', 404);
+  }
+
+  // Check if proposal can be updated based on status
+  if (!canUpdateProposal(proposal.status)) {
+    throw new AppError(
+      `Cannot update proposal with status ${proposal.status}. Signed and archived proposals cannot be modified.`,
+      400
+    );
   }
 
   // Check permissions
@@ -284,24 +330,46 @@ export const updateProposal = async (
     throw new AppError('Insufficient permissions', 403);
   }
 
-  // If content changed, create new version
-  let versionCreated = false;
-  if (data.content && data.content !== proposal.content) {
-    const latestVersion = await prisma.proposalVersion.findFirst({
-      where: { proposalId },
-      orderBy: { versionNumber: 'desc' }
-    });
+  // Check for active signature requests before allowing content changes
+  if ((data.content && data.content !== proposal.content) || data.status) {
+    const activeSignatureRequests = proposal.signatureRequests;
 
-    await prisma.proposalVersion.create({
-      data: {
+    if (activeSignatureRequests && activeSignatureRequests.length > 0) {
+      throw new AppError(
+        'Cannot modify proposal content or status while there are active signature requests. Please cancel the signature request first.',
+        400
+      );
+    }
+  }
+
+  // Validate status transition if status is being changed
+  if (data.status && data.status !== proposal.status) {
+    if (!validateStatusTransition(proposal.status, data.status)) {
+      throw new AppError(
+        `Invalid status transition from ${proposal.status} to ${data.status}`,
+        400
+      );
+    }
+  }
+
+  // If content changed, create new version using version service
+  let versionCreated = false;
+  let versionInfo = null;
+  if (data.content && data.content !== proposal.content) {
+    // Use the enhanced version service to create version with diff
+    const versionResult = await createVersion(
+      {
         proposalId,
-        versionNumber: (latestVersion?.versionNumber || 0) + 1,
         content: data.content,
-        changeDescription: 'Updated content',
-        createdById: userId
-      }
-    });
+        changeDescription: changeDescription || 'Updated proposal content',
+        createdById: userId,
+        changeType: 'MINOR'
+      },
+      ipAddress,
+      userAgent
+    );
     versionCreated = true;
+    versionInfo = versionResult;
   }
 
   const updated = await prisma.proposal.update({
@@ -321,7 +389,11 @@ export const updateProposal = async (
           lastName: true
         }
       },
-      organization: true
+      organization: true,
+      versions: {
+        orderBy: { versionNumber: 'desc' },
+        take: 5 // Get latest 5 versions
+      }
     }
   });
 
@@ -332,13 +404,25 @@ export const updateProposal = async (
     resourceId: proposalId,
     ipAddress,
     userAgent,
-    metadata: { versionCreated, changes: Object.keys(data) }
+    metadata: {
+      versionCreated,
+      changes: Object.keys(data),
+      versionNumber: versionInfo?.version?.versionNumber,
+      linesChanged: versionInfo?.statistics,
+      statusChanged: data.status !== proposal.status,
+      oldStatus: proposal.status,
+      newStatus: data.status
+    }
   });
 
   // Notify about update
   await notifyProposalUpdated(proposalId, userId);
 
-  return updated;
+  return {
+    proposal: updated,
+    versionCreated,
+    versionInfo
+  };
 };
 
 export const deleteProposal = async (
@@ -348,11 +432,36 @@ export const deleteProposal = async (
   userAgent: string
 ) => {
   const proposal = await prisma.proposal.findUnique({
-    where: { id: proposalId }
+    where: { id: proposalId },
+    include: {
+      signatureRequests: {
+        where: {
+          status: {
+            in: [SignatureRequestStatus.PENDING, SignatureRequestStatus.IN_PROGRESS]
+          }
+        }
+      }
+    }
   });
 
   if (!proposal) {
     throw new AppError('Proposal not found', 404);
+  }
+
+  // Check for active signature requests
+  if (proposal.signatureRequests && proposal.signatureRequests.length > 0) {
+    throw new AppError(
+      'Cannot delete proposal with active signature requests. Please cancel the signature request first.',
+      400
+    );
+  }
+
+  // Prevent deletion of signed proposals (important for legal compliance)
+  if (proposal.status === ProposalStatus.SIGNED) {
+    throw new AppError(
+      'Cannot delete signed proposals. Signed proposals must be retained for legal compliance. You can archive it instead.',
+      400
+    );
   }
 
   // Only creator or organization owner can delete
@@ -381,7 +490,11 @@ export const deleteProposal = async (
     resourceType: 'proposal',
     resourceId: proposalId,
     ipAddress,
-    userAgent
+    userAgent,
+    metadata: {
+      status: proposal.status,
+      title: proposal.title
+    }
   });
 
   return { message: 'Proposal deleted successfully' };
@@ -490,4 +603,69 @@ export const removeCollaborator = async (
   });
 
   return { message: 'Collaborator removed successfully' };
+};
+
+/**
+ * Check if a proposal has active signature requests
+ * Used by signature service to validate signature request creation
+ */
+export const hasActiveSignatureRequests = async (proposalId: string): Promise<boolean> => {
+  const activeRequests = await prisma.signatureRequest.count({
+    where: {
+      proposalId,
+      status: {
+        in: [SignatureRequestStatus.PENDING, SignatureRequestStatus.IN_PROGRESS]
+      }
+    }
+  });
+
+  return activeRequests > 0;
+};
+
+/**
+ * Get proposal status for signature workflow validation
+ * Used by signature service before creating signature requests
+ */
+export const getProposalForSignature = async (proposalId: string, userId: string) => {
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      status: true,
+      organizationId: true,
+      creatorId: true,
+      updatedAt: true,
+      versions: {
+        orderBy: { versionNumber: 'desc' },
+        take: 1,
+        select: {
+          versionNumber: true,
+          content: true,
+          createdAt: true
+        }
+      }
+    }
+  });
+
+  if (!proposal) {
+    throw new AppError('Proposal not found', 404);
+  }
+
+  // Check if user has access
+  const membership = await prisma.organizationMember.findUnique({
+    where: {
+      userId_organizationId: {
+        userId,
+        organizationId: proposal.organizationId
+      }
+    }
+  });
+
+  if (!membership) {
+    throw new AppError('Access denied', 403);
+  }
+
+  return proposal;
 };
