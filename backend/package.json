@@ -9,9 +9,13 @@
     "start": "node dist/server.js",
     "migrate": "npx prisma migrate dev",
     "studio": "npx prisma studio",
+    "seed": "ts-node prisma/seed.ts",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [
     "proposal",
