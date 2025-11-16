@@ -1,11 +1,19 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "openssl"]
+nixPkgs = ["nodejs-18_x", "openssl"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = [
+  "npm ci --legacy-peer-deps || npm install"
+]
 
 [phases.build]
-cmds = ["npx prisma generate", "npm run build"]
+cmds = [
+  "npx prisma generate",
+  "npm run build"
+]
 
 [start]
 cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"
