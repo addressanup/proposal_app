@@ -6,6 +6,11 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import NotificationsDropdown from './components/common/NotificationsDropdown';
 
 // Import pages
+import LandingPage from './pages/LandingPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import FAQPage from './pages/FAQPage';
+import SitemapPage from './pages/SitemapPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -151,6 +156,11 @@ function App() {
         <Toast />
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/sitemap" element={<SitemapPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -344,9 +354,8 @@ function App() {
             }
           />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Default redirect for unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
