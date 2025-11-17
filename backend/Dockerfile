@@ -1,6 +1,6 @@
 # Multi-stage build for production
 
-# Stage 1: Build
+# Stage 1: Build Backend
 FROM node:18-slim AS builder
 
 WORKDIR /app

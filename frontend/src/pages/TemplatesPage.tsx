@@ -213,25 +213,26 @@ export default function TemplatesPage() {
       </div>
 
       {/* Templates Grid/List */}
-      {filteredTemplates.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
-            <FileText size={40} className="text-gray-400" />
+      <div>
+        {filteredTemplates.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+              <FileText size={40} className="text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No templates found</h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              {searchTerm || selectedType !== 'ALL'
+                ? 'Try adjusting your search or filters to find the right template'
+                : 'Get started by creating your first custom template'}
+            </p>
+            <Link to="/templates/create">
+              <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold">
+                <Plus size={20} />
+                Create Custom Template
+              </button>
+            </Link>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No templates found</h3>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            {searchTerm || selectedType !== 'ALL'
-              ? 'Try adjusting your search or filters to find the right template'
-              : 'Get started by creating your first custom template'}
-          </p>
-          <Link to="/templates/create">
-            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold">
-              <Plus size={20} />
-              Create Custom Template
-            </button>
-          </Link>
-        </div>
-      ) : viewMode === 'grid' ? (
+        ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTemplates.map((template) => (
             <div
