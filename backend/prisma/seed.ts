@@ -1,979 +1,1006 @@
-import { PrismaClient, ContractType, ContractCategory, ClauseCategory } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('🌱 Starting comprehensive seed...');
 
-  // Create a system user for seeding (or use existing)
-  let systemUser = await prisma.user.findFirst({
-    where: { email: 'system@proposalapp.com' }
+  // ========================================================================
+  // DEMO USERS
+  // ========================================================================
+  console.log('👥 Creating demo users...');
+
+  const hashedPassword = await bcrypt.hash('Demo123!', 10);
+
+  const john = await prisma.user.upsert({
+    where: { email: 'john.doe@techcorp.com' },
+    update: {},
+    create: {
+      email: 'john.doe@techcorp.com',
+      passwordHash: hashedPassword,
+      firstName: 'John',
+      lastName: 'Doe',
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    },
   });
 
-  if (!systemUser) {
-    systemUser = await prisma.user.create({
+  const jane = await prisma.user.upsert({
+    where: { email: 'jane.smith@techcorp.com' },
+    update: {},
+    create: {
+      email: 'jane.smith@techcorp.com',
+      passwordHash: hashedPassword,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    },
+  });
+
+  const bob = await prisma.user.upsert({
+    where: { email: 'bob.wilson@acmecorp.com' },
+    update: {},
+    create: {
+      email: 'bob.wilson@acmecorp.com',
+      passwordHash: hashedPassword,
+      firstName: 'Bob',
+      lastName: 'Wilson',
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    },
+  });
+
+  const alice = await prisma.user.upsert({
+    where: { email: 'alice.johnson@acmecorp.com' },
+    update: {},
+    create: {
+      email: 'alice.johnson@acmecorp.com',
+      passwordHash: hashedPassword,
+      firstName: 'Alice',
+      lastName: 'Johnson',
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    },
+  });
+
+  const sarah = await prisma.user.upsert({
+    where: { email: 'sarah.brown@freelance.com' },
+    update: {},
+    create: {
+      email: 'sarah.brown@freelance.com',
+      passwordHash: hashedPassword,
+      firstName: 'Sarah',
+      lastName: 'Brown',
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    },
+  });
+
+  console.log('✅ Created 5 demo users');
+
+  // ========================================================================
+  // ORGANIZATIONS
+  // ========================================================================
+  console.log('🏢 Creating organizations...');
+
+  const techCorp = await prisma.organization.upsert({
+    where: { slug: 'techcorp' },
+    update: {},
+    create: {
+      name: 'TechCorp Inc.',
+      slug: 'techcorp',
+      description: 'Leading technology company specializing in software development and consulting',
+    },
+  });
+
+  const acmeCorp = await prisma.organization.upsert({
+    where: { slug: 'acmecorp' },
+    update: {},
+    create: {
+      name: 'Acme Corporation',
+      slug: 'acmecorp',
+      description: 'Global enterprise solutions provider',
+    },
+  });
+
+  console.log('✅ Created 2 organizations');
+
+  // ========================================================================
+  // ORGANIZATION MEMBERS
+  // ========================================================================
+  console.log('👔 Adding organization members...');
+
+  await prisma.organizationMember.upsert({
+    where: {
+      userId_organizationId: {
+        userId: john.id,
+        organizationId: techCorp.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: john.id,
+      organizationId: techCorp.id,
+      role: 'OWNER',
+    },
+  });
+
+  await prisma.organizationMember.upsert({
+    where: {
+      userId_organizationId: {
+        userId: jane.id,
+        organizationId: techCorp.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: jane.id,
+      organizationId: techCorp.id,
+      role: 'ADMIN',
+    },
+  });
+
+  await prisma.organizationMember.upsert({
+    where: {
+      userId_organizationId: {
+        userId: bob.id,
+        organizationId: acmeCorp.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: bob.id,
+      organizationId: acmeCorp.id,
+      role: 'OWNER',
+    },
+  });
+
+  await prisma.organizationMember.upsert({
+    where: {
+      userId_organizationId: {
+        userId: alice.id,
+        organizationId: acmeCorp.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: alice.id,
+      organizationId: acmeCorp.id,
+      role: 'EDITOR',
+    },
+  });
+
+  console.log('✅ Added organization members');
+
+  // ========================================================================
+  // PROPOSALS
+  // ========================================================================
+  console.log('📄 Creating proposals...');
+
+  const proposal1 = await prisma.proposal.create({
+    data: {
+      title: 'Software Development Services Proposal',
+      description: 'Comprehensive proposal for building a custom CRM system',
+      content: '<h1>Software Development Proposal</h1><p>We propose to build a custom CRM solution tailored to your business needs...</p>',
+      status: 'PENDING_REVIEW',
+      organizationId: techCorp.id,
+      creatorId: john.id,
+    },
+  });
+
+  const proposal2 = await prisma.proposal.create({
+    data: {
+      title: 'Enterprise Consulting Services',
+      description: 'Strategic consulting for digital transformation',
+      content: '<h1>Consulting Proposal</h1><p>Our team will help guide your digital transformation journey...</p>',
+      status: 'UNDER_NEGOTIATION',
+      organizationId: techCorp.id,
+      creatorId: jane.id,
+    },
+  });
+
+  const proposal3 = await prisma.proposal.create({
+    data: {
+      title: 'Cloud Migration Project',
+      description: 'Migration of legacy systems to AWS cloud infrastructure',
+      content: '<h1>Cloud Migration Proposal</h1><p>We will migrate your infrastructure to AWS with zero downtime...</p>',
+      status: 'DRAFT',
+      organizationId: acmeCorp.id,
+      creatorId: bob.id,
+    },
+  });
+
+  console.log('✅ Created 3 proposals');
+
+  // ========================================================================
+  // COMMENTS
+  // ========================================================================
+  console.log('💬 Adding comments...');
+
+  await prisma.comment.create({
+    data: {
+      content: 'Great proposal! I have a few questions about the timeline.',
+      proposalId: proposal1.id,
+      authorId: jane.id,
+    },
+  });
+
+  await prisma.comment.create({
+    data: {
+      content: 'Can we include additional features in Phase 2?',
+      proposalId: proposal2.id,
+      authorId: john.id,
+    },
+  });
+
+  console.log('✅ Added comments');
+
+  // ========================================================================
+  // CONNECTIONS
+  // ========================================================================
+  console.log('🤝 Creating user connections...');
+
+  await prisma.connection.create({
+    data: {
+      initiatorId: john.id,
+      recipientId: bob.id,
+      connectionType: 'CROSS_ORGANIZATION',
+      status: 'ACTIVE',
+      originProposalId: proposal1.id,
+    },
+  });
+
+  await prisma.connection.create({
+    data: {
+      initiatorId: jane.id,
+      recipientId: alice.id,
+      connectionType: 'CROSS_ORGANIZATION',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log('✅ Created connections');
+
+  // ========================================================================
+  // CONTRACTS
+  // ========================================================================
+  console.log('📋 Creating contracts...');
+
+  const employmentContract = await prisma.contract.create({
+    data: {
+      title: 'Employment Agreement - Senior Software Engineer',
+      description: 'Full-time employment contract for senior developer position',
+      content: '<h1>EMPLOYMENT AGREEMENT</h1><p>This agreement is between TechCorp Inc. and Sarah Brown...</p>',
+      contractType: 'EMPLOYMENT',
+      category: 'EMPLOYMENT_HR',
+      status: 'ACTIVE',
+      organizationId: techCorp.id,
+      creatorId: john.id,
+      contractValue: 120000,
+      currency: 'USD',
+      effectiveDate: new Date('2024-01-15'),
+      expirationDate: new Date('2025-01-14'),
+      autoRenew: true,
+      renewalTermMonths: 12,
+      tags: ['employment', 'engineering', 'full-time'],
+    },
+  });
+
+  const vendorContract = await prisma.contract.create({
+    data: {
+      title: 'Master Services Agreement - Cloud Services',
+      description: 'MSA with cloud infrastructure provider',
+      content: '<h1>MASTER SERVICES AGREEMENT</h1><p>Agreement for cloud hosting and infrastructure services...</p>',
+      contractType: 'VENDOR_SERVICE',
+      category: 'VENDOR_SUPPLIER',
+      status: 'ACTIVE',
+      organizationId: techCorp.id,
+      creatorId: jane.id,
+      contractValue: 50000,
+      currency: 'USD',
+      effectiveDate: new Date('2024-06-01'),
+      expirationDate: new Date('2025-05-31'),
+      renewalDate: new Date('2025-04-01'),
+      autoRenew: true,
+      renewalTermMonths: 12,
+      renewalNoticeDays: 60,
+      tags: ['vendor', 'cloud', 'infrastructure'],
+    },
+  });
+
+  const ndaContract = await prisma.contract.create({
+    data: {
+      title: 'Mutual Non-Disclosure Agreement',
+      description: 'NDA for strategic partnership discussions',
+      content: '<h1>MUTUAL NDA</h1><p>Confidentiality agreement between TechCorp and Acme Corp...</p>',
+      contractType: 'NDA',
+      category: 'CONFIDENTIALITY',
+      status: 'FULLY_EXECUTED',
+      organizationId: techCorp.id,
+      creatorId: john.id,
+      effectiveDate: new Date('2024-03-01'),
+      expirationDate: new Date('2026-03-01'),
+      tags: ['nda', 'confidentiality', 'partnership'],
+    },
+  });
+
+  const consultingContract = await prisma.contract.create({
+    data: {
+      title: 'Independent Contractor Agreement - UX Designer',
+      description: 'Consulting agreement for freelance UX design services',
+      content: '<h1>CONSULTING AGREEMENT</h1><p>Independent contractor agreement for UX design services...</p>',
+      contractType: 'CONSULTING',
+      category: 'CONSULTING_PROFESSIONAL',
+      status: 'PENDING_SIGNATURE',
+      organizationId: acmeCorp.id,
+      creatorId: bob.id,
+      contractValue: 75000,
+      currency: 'USD',
+      effectiveDate: new Date('2024-09-01'),
+      expirationDate: new Date('2025-02-28'),
+      tags: ['consulting', 'design', 'freelance'],
+    },
+  });
+
+  const expiringContract = await prisma.contract.create({
+    data: {
+      title: 'Office Lease Agreement',
+      description: 'Commercial lease for office space',
+      content: '<h1>LEASE AGREEMENT</h1><p>Commercial lease agreement for office premises...</p>',
+      contractType: 'LEASE',
+      category: 'REAL_ESTATE',
+      status: 'EXPIRING_SOON',
+      organizationId: techCorp.id,
+      creatorId: john.id,
+      contractValue: 240000,
+      currency: 'USD',
+      effectiveDate: new Date('2023-01-01'),
+      expirationDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // 25 days from now
+      renewalDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      tags: ['lease', 'office', 'real-estate'],
+    },
+  });
+
+  console.log('✅ Created 5 contracts');
+
+  // ========================================================================
+  // COUNTERPARTIES
+  // ========================================================================
+  console.log('👥 Adding counterparties...');
+
+  await prisma.counterparty.create({
+    data: {
+      contractId: employmentContract.id,
+      type: 'INDIVIDUAL',
+      firstName: 'Sarah',
+      lastName: 'Brown',
+      email: 'sarah.brown@freelance.com',
+      phone: '+1-555-0123',
+      role: 'EMPLOYEE',
+      signingAuthority: true,
+      isPrimary: true,
+    },
+  });
+
+  await prisma.counterparty.create({
+    data: {
+      contractId: vendorContract.id,
+      type: 'ORGANIZATION',
+      organizationName: 'CloudHost Solutions Inc.',
+      registrationNumber: 'CH-2024-567',
+      email: 'contracts@cloudhost.com',
+      phone: '+1-555-0456',
+      role: 'VENDOR',
+      signingAuthority: true,
+      isPrimary: true,
+    },
+  });
+
+  await prisma.counterparty.create({
+    data: {
+      contractId: ndaContract.id,
+      type: 'ORGANIZATION',
+      organizationName: 'Acme Corporation',
+      email: 'legal@acmecorp.com',
+      role: 'PARTNER',
+      signingAuthority: true,
+      isPrimary: true,
+    },
+  });
+
+  console.log('✅ Added counterparties');
+
+  // ========================================================================
+  // OBLIGATIONS
+  // ========================================================================
+  console.log('📌 Creating obligations...');
+
+  await prisma.obligation.create({
+    data: {
+      contractId: vendorContract.id,
+      type: 'PAYMENT',
+      title: 'Monthly Service Payment',
+      description: 'Monthly cloud hosting payment',
+      responsibleParty: 'US',
+      assignedToId: jane.id,
+      dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+      status: 'DUE_SOON',
+      priority: 'HIGH',
+      isRecurring: true,
+      recurrenceRule: { freq: 'MONTHLY', interval: 1 },
+      financialImpact: 4166.67,
+    },
+  });
+
+  await prisma.obligation.create({
+    data: {
+      contractId: vendorContract.id,
+      type: 'REVIEW',
+      title: 'Quarterly Performance Review',
+      description: 'Review vendor SLA compliance and performance metrics',
+      responsibleParty: 'US',
+      assignedToId: john.id,
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      status: 'UPCOMING',
+      priority: 'MEDIUM',
+      isRecurring: true,
+      recurrenceRule: { freq: 'QUARTERLY' },
+    },
+  });
+
+  await prisma.obligation.create({
+    data: {
+      contractId: employmentContract.id,
+      type: 'COMPLIANCE',
+      title: 'Annual Performance Evaluation',
+      description: 'Conduct annual performance review with employee',
+      responsibleParty: 'US',
+      assignedToId: john.id,
+      dueDate: new Date('2025-01-01'),
+      status: 'UPCOMING',
+      priority: 'MEDIUM',
+    },
+  });
+
+  await prisma.obligation.create({
+    data: {
+      contractId: expiringContract.id,
+      type: 'RENEWAL',
+      title: 'Lease Renewal Decision',
+      description: 'Notify landlord of renewal intent',
+      responsibleParty: 'US',
+      assignedToId: john.id,
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      status: 'DUE_SOON',
+      priority: 'CRITICAL',
+    },
+  });
+
+  console.log('✅ Created obligations');
+
+  // ========================================================================
+  // MILESTONES
+  // ========================================================================
+  console.log('🎯 Creating milestones...');
+
+  await prisma.milestone.create({
+    data: {
+      contractId: consultingContract.id,
+      name: 'Project Kickoff',
+      description: 'Initial project planning and requirements gathering',
+      targetDate: new Date('2024-09-01'),
+      actualDate: new Date('2024-09-01'),
+      status: 'COMPLETED',
+      sequence: 1,
+      paymentAmount: 15000,
+      paymentStatus: 'PAID',
+    },
+  });
+
+  await prisma.milestone.create({
+    data: {
+      contractId: consultingContract.id,
+      name: 'Design Phase Complete',
+      description: 'Complete UX designs and wireframes',
+      targetDate: new Date('2024-10-15'),
+      status: 'IN_PROGRESS',
+      sequence: 2,
+      paymentAmount: 20000,
+      paymentStatus: 'NOT_DUE',
+    },
+  });
+
+  await prisma.milestone.create({
+    data: {
+      contractId: consultingContract.id,
+      name: 'Final Delivery',
+      description: 'Deliver all design assets and documentation',
+      targetDate: new Date('2025-02-28'),
+      status: 'NOT_STARTED',
+      sequence: 3,
+      paymentAmount: 40000,
+      paymentStatus: 'NOT_DUE',
+    },
+  });
+
+  console.log('✅ Created milestones');
+
+  // ========================================================================
+  // AMENDMENTS
+  // ========================================================================
+  console.log('📝 Creating amendments...');
+
+  await prisma.amendment.create({
+    data: {
+      contractId: vendorContract.id,
+      amendmentNumber: 1,
+      title: 'Increase Service Level',
+      description: 'Upgrade to premium support tier with 24/7 coverage',
+      changes: {
+        section: 'Service Level',
+        oldValue: 'Standard Support',
+        newValue: 'Premium 24/7 Support',
+        financialImpact: 10000,
+      },
+      effectiveDate: new Date('2024-10-01'),
+      status: 'EXECUTED',
+      approvedBy: jane.id,
+      approvedAt: new Date('2024-09-15'),
+      createdBy: jane.id,
+      requiresSignature: true,
+    },
+  });
+
+  await prisma.amendment.create({
+    data: {
+      contractId: employmentContract.id,
+      amendmentNumber: 1,
+      title: 'Salary Adjustment',
+      description: 'Annual merit increase',
+      changes: {
+        section: 'Compensation',
+        oldValue: '$120,000',
+        newValue: '$132,000',
+        increasePercentage: 10,
+      },
+      effectiveDate: new Date('2025-01-15'),
+      status: 'PENDING_APPROVAL',
+      createdBy: john.id,
+      requiresSignature: true,
+    },
+  });
+
+  console.log('✅ Created amendments');
+
+  // ========================================================================
+  // REMINDERS
+  // ========================================================================
+  console.log('⏰ Creating reminders...');
+
+  await prisma.reminder.create({
+    data: {
+      userId: jane.id,
+      type: 'PAYMENT_DUE',
+      priority: 'HIGH',
+      title: 'Monthly Cloud Hosting Payment Due',
+      description: 'Payment due for CloudHost Solutions monthly invoice',
+      dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      reminderDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      status: 'PENDING',
+      contractId: vendorContract.id,
+      isRecurring: true,
+      recurringFrequency: 'MONTHLY',
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: john.id,
+      type: 'CONTRACT_EXPIRATION',
+      priority: 'URGENT',
+      title: 'Office Lease Expiring Soon',
+      description: 'Office lease expires in 25 days - renewal decision needed',
+      dueDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+      reminderDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      status: 'PENDING',
+      contractId: expiringContract.id,
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: john.id,
+      type: 'REVIEW_DUE',
+      priority: 'MEDIUM',
+      title: 'Quarterly Vendor Review',
+      description: 'Review CloudHost performance and SLA compliance',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      reminderDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+      status: 'PENDING',
+      contractId: vendorContract.id,
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: bob.id,
+      type: 'SIGNATURE_REQUEST',
+      priority: 'HIGH',
+      title: 'Consulting Agreement Signature Needed',
+      description: 'UX Designer contract awaiting signature',
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      reminderDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      status: 'PENDING',
+      contractId: consultingContract.id,
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: jane.id,
+      type: 'MILESTONE',
+      priority: 'MEDIUM',
+      title: 'Design Phase Milestone Due',
+      description: 'UX design milestone targetDate approaching',
+      dueDate: new Date('2024-10-15'),
+      reminderDate: new Date('2024-10-10'),
+      status: 'COMPLETED',
+      completedAt: new Date('2024-10-08'),
+      contractId: consultingContract.id,
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: john.id,
+      type: 'CUSTOM',
+      priority: 'LOW',
+      title: 'Follow up on partnership proposal',
+      description: 'Check in with Acme Corp about strategic partnership discussions',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      reminderDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      status: 'PENDING',
+      proposalId: proposal2.id,
+    },
+  });
+
+  console.log('✅ Created 6 reminders');
+
+  // ========================================================================
+  // NOTIFICATIONS
+  // ========================================================================
+  console.log('🔔 Creating notifications...');
+
+  await prisma.notification.create({
+    data: {
+      userId: john.id,
+      type: 'PROPOSAL_CREATED',
+      title: 'New Proposal Created',
+      message: 'Jane Smith created a new proposal: Enterprise Consulting Services',
+      resourceType: 'proposal',
+      resourceId: proposal2.id,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: jane.id,
+      type: 'COMMENT_ADDED',
+      title: 'New Comment on Proposal',
+      message: 'John Doe commented on Software Development Services Proposal',
+      isRead: true,
+      readAt: new Date(),
+      resourceType: 'proposal',
+      resourceId: proposal1.id,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: bob.id,
+      type: 'CONNECTION_ESTABLISHED',
+      title: 'New Connection',
+      message: 'John Doe connected with you',
+      resourceType: 'connection',
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: john.id,
+      type: 'STATUS_CHANGE',
+      title: 'Contract Status Updated',
+      message: 'Office Lease Agreement status changed to Expiring Soon',
+      resourceType: 'contract',
+      resourceId: expiringContract.id,
+    },
+  });
+
+  console.log('✅ Created notifications');
+
+  // ========================================================================
+  // MESSAGES
+  // ========================================================================
+  console.log('💬 Creating messages...');
+
+  const connection = await prisma.connection.findFirst({
+    where: {
+      initiatorId: john.id,
+      recipientId: bob.id,
+    },
+  });
+
+  if (connection) {
+    const message1 = await prisma.message.create({
       data: {
-        email: 'system@proposalapp.com',
-        firstName: 'System',
-        lastName: 'Administrator',
-        password: 'not-used', // This user cannot login
-        isEmailVerified: true
-      }
+        connectionId: connection.id,
+        senderId: john.id,
+        content: 'Hi Bob! I wanted to discuss the proposal we sent over. Do you have time this week?',
+        messageType: 'TEXT',
+        proposalId: proposal1.id,
+      },
     });
-    console.log('✅ Created system user');
+
+    await prisma.message.create({
+      data: {
+        connectionId: connection.id,
+        senderId: bob.id,
+        content: 'Hi John! Yes, I reviewed it. Looks great! Can we schedule a call for Thursday?',
+        messageType: 'TEXT',
+        proposalId: proposal1.id,
+      },
+    });
+
+    // Mark first message as read
+    await prisma.messageRead.create({
+      data: {
+        messageId: message1.id,
+        userId: bob.id,
+      },
+    });
+
+    console.log('✅ Created messages');
   }
 
   // ========================================================================
-  // EMPLOYMENT AGREEMENT TEMPLATES
+  // AUDIT LOGS
   // ========================================================================
+  console.log('📊 Creating audit logs...');
 
-  console.log('📄 Creating Employment Agreement templates...');
-
-  await prisma.contractTemplate.create({
+  await prisma.auditLog.create({
     data: {
+      userId: john.id,
+      action: 'CONTRACT_CREATED',
+      resourceType: 'contract',
+      resourceId: employmentContract.id,
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0',
+      metadata: {
+        contractTitle: 'Employment Agreement - Senior Software Engineer',
+        contractType: 'EMPLOYMENT',
+      },
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: jane.id,
+      action: 'CONTRACT_UPDATED',
+      resourceType: 'contract',
+      resourceId: vendorContract.id,
+      ipAddress: '192.168.1.101',
+      userAgent: 'Mozilla/5.0',
+      metadata: {
+        changes: ['status'],
+        oldStatus: 'DRAFT',
+        newStatus: 'ACTIVE',
+      },
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: bob.id,
+      action: 'PROPOSAL_VIEWED',
+      resourceType: 'proposal',
+      resourceId: proposal1.id,
+      ipAddress: '192.168.1.102',
+      userAgent: 'Mozilla/5.0',
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: john.id,
+      action: 'OBLIGATION_CREATED',
+      resourceType: 'obligation',
+      ipAddress: '192.168.1.100',
+      userAgent: 'Mozilla/5.0',
+      metadata: {
+        obligationType: 'PAYMENT',
+        contractId: vendorContract.id,
+      },
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: jane.id,
+      action: 'REMINDER_CREATED',
+      resourceType: 'reminder',
+      ipAddress: '192.168.1.101',
+      userAgent: 'Mozilla/5.0',
+      metadata: {
+        reminderType: 'PAYMENT_DUE',
+        priority: 'HIGH',
+      },
+    },
+  });
+
+  console.log('✅ Created audit logs');
+
+  // ========================================================================
+  // CONTRACT TEMPLATES
+  // ========================================================================
+  console.log('📋 Creating contract templates...');
+
+  await prisma.contractTemplate.upsert({
+    where: { id: 'template-employment-tech' },
+    update: {},
+    create: {
+      id: 'template-employment-tech',
       name: 'Full-Time Employment Agreement - Tech Industry',
-      description: 'Comprehensive full-time employment agreement for technology companies, including IP assignment, confidentiality, and non-compete clauses.',
-      contractType: ContractType.EMPLOYMENT,
-      category: ContractCategory.EMPLOYMENT,
+      description: 'Comprehensive employment agreement for technology companies',
+      contractType: 'EMPLOYMENT',
+      category: 'EMPLOYMENT_HR',
       isGlobal: true,
       isActive: true,
       version: 1,
-      content: `EMPLOYMENT AGREEMENT
-
-This Employment Agreement ("Agreement") is entered into on {{start_date}}, by and between:
-
-EMPLOYER: {{company_name}}, a {{company_type}} organized under the laws of {{jurisdiction}}
-Address: {{company_address}}
-
-EMPLOYEE: {{employee_name}}
-Address: {{employee_address}}
-Email: {{employee_email}}
-
-1. POSITION AND DUTIES
-
-1.1 Position: The Employee is hired for the position of {{job_title}}.
-
-1.2 Duties: The Employee shall perform all duties and responsibilities associated with the position, including but not limited to:
-{{job_responsibilities}}
-
-1.3 Reporting: The Employee shall report to {{supervisor_title}}.
-
-2. COMPENSATION
-
-2.1 Base Salary: The Employee shall receive a base salary of {{annual_salary}} per year, payable in accordance with the Employer's standard payroll schedule.
-
-2.2 Benefits: The Employee shall be eligible for the following benefits:
-- Health Insurance: {{health_insurance_details}}
-- Retirement Plan: {{retirement_plan_details}}
-- Paid Time Off: {{pto_days}} days per year
-- {{additional_benefits}}
-
-2.3 Bonus: {{#if has_bonus}}The Employee may be eligible for an annual performance bonus of up to {{bonus_percentage}}% of base salary, subject to company performance and individual performance metrics.{{/if}}
-
-3. TERM AND TERMINATION
-
-3.1 Start Date: Employment shall commence on {{start_date}}.
-
-3.2 At-Will Employment: This employment is at-will, meaning either party may terminate the relationship at any time, with or without cause, subject to the notice requirements below.
-
-3.3 Notice Period: Either party shall provide {{notice_period_days}} days written notice of termination.
-
-3.4 Severance: {{#if has_severance}}Upon termination without cause, the Employee shall receive severance pay equal to {{severance_weeks}} weeks of base salary.{{/if}}
-
-4. CONFIDENTIALITY
-
-4.1 The Employee agrees to maintain strict confidentiality of all proprietary information, trade secrets, and confidential business information of the Employer.
-
-4.2 This obligation shall survive the termination of employment for a period of {{confidentiality_years}} years.
-
-5. INTELLECTUAL PROPERTY
-
-5.1 All inventions, discoveries, works, and intellectual property created by the Employee in the course of employment shall be the exclusive property of the Employer.
-
-5.2 The Employee agrees to execute all documents necessary to assign such rights to the Employer.
-
-6. NON-COMPETE
-
-{{#if has_noncompete}}6.1 For a period of {{noncompete_months}} months following termination, the Employee agrees not to engage in any business that directly competes with the Employer within {{noncompete_territory}}.{{/if}}
-
-7. GOVERNING LAW
-
-This Agreement shall be governed by the laws of {{governing_law}}.
-
-IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
-
-EMPLOYER: {{company_name}}
-
-By: _______________________
-Name: {{company_representative}}
-Title: {{representative_title}}
-Date: __________
-
-EMPLOYEE:
-
-Signature: _______________________
-Name: {{employee_name}}
-Date: __________`,
+      content: `<h1>EMPLOYMENT AGREEMENT</h1>
+<p>This Employment Agreement is entered into between {{company_name}} and {{employee_name}}.</p>
+<h2>Position</h2>
+<p>Title: {{job_title}}</p>
+<p>Department: {{department}}</p>
+<h2>Compensation</h2>
+<p>Annual Salary: ${{annual_salary}}</p>
+<p>Benefits: {{benefits}}</p>`,
       structure: {
         sections: [
-          { id: 's1', name: 'Position and Duties', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Compensation', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Term and Termination', order: 3, clauseIds: [] },
-          { id: 's4', name: 'Confidentiality', order: 4, clauseIds: [] },
-          { id: 's5', name: 'Intellectual Property', order: 5, clauseIds: [] },
-          { id: 's6', name: 'Non-Compete', order: 6, clauseIds: [] },
-          { id: 's7', name: 'Governing Law', order: 7, clauseIds: [] }
-        ]
+          { id: 's1', name: 'Position', order: 1 },
+          { id: 's2', name: 'Compensation', order: 2 },
+          { id: 's3', name: 'Confidentiality', order: 3 },
+        ],
       },
       requiredFields: {
         company_name: { type: 'TEXT', label: 'Company Name' },
-        company_type: { type: 'SELECT', label: 'Company Type', options: ['Corporation', 'LLC', 'Partnership'] },
-        company_address: { type: 'TEXT', label: 'Company Address' },
         employee_name: { type: 'TEXT', label: 'Employee Name' },
-        employee_address: { type: 'TEXT', label: 'Employee Address' },
-        employee_email: { type: 'TEXT', label: 'Employee Email' },
         job_title: { type: 'TEXT', label: 'Job Title' },
-        job_responsibilities: { type: 'TEXT', label: 'Job Responsibilities' },
-        supervisor_title: { type: 'TEXT', label: 'Supervisor Title' },
         annual_salary: { type: 'CURRENCY', label: 'Annual Salary' },
-        start_date: { type: 'DATE', label: 'Start Date' },
-        notice_period_days: { type: 'NUMBER', label: 'Notice Period (Days)' },
-        governing_law: { type: 'TEXT', label: 'Governing Law' },
-        company_representative: { type: 'TEXT', label: 'Company Representative Name' },
-        representative_title: { type: 'TEXT', label: 'Representative Title' }
       },
       optionalFields: {
-        health_insurance_details: { type: 'TEXT', label: 'Health Insurance Details' },
-        retirement_plan_details: { type: 'TEXT', label: 'Retirement Plan Details' },
-        pto_days: { type: 'NUMBER', label: 'PTO Days per Year' },
-        additional_benefits: { type: 'TEXT', label: 'Additional Benefits' },
-        has_bonus: { type: 'BOOLEAN', label: 'Include Bonus Clause' },
-        bonus_percentage: { type: 'PERCENTAGE', label: 'Maximum Bonus Percentage' },
-        has_severance: { type: 'BOOLEAN', label: 'Include Severance' },
-        severance_weeks: { type: 'NUMBER', label: 'Severance Weeks' },
-        confidentiality_years: { type: 'NUMBER', label: 'Confidentiality Period (Years)', defaultValue: 2 },
-        has_noncompete: { type: 'BOOLEAN', label: 'Include Non-Compete' },
-        noncompete_months: { type: 'NUMBER', label: 'Non-Compete Period (Months)' },
-        noncompete_territory: { type: 'TEXT', label: 'Non-Compete Territory' }
+        department: { type: 'TEXT', label: 'Department' },
+        benefits: { type: 'TEXT', label: 'Benefits' },
       },
       conditionalFields: {},
       jurisdiction: ['US'],
       governingLaw: 'State of California',
       language: 'en',
-      tags: ['employment', 'full-time', 'tech', 'comprehensive'],
+      tags: ['employment', 'full-time', 'tech'],
       industry: ['Technology', 'Software'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
+      createdBy: john.id,
+    },
   });
 
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Part-Time Employment Agreement',
-      description: 'Simple part-time employment agreement suitable for hourly workers with flexible schedules.',
-      contractType: ContractType.EMPLOYMENT,
-      category: ContractCategory.EMPLOYMENT,
-      isGlobal: true,
-      isActive: true,
-      version: 1,
-      content: `PART-TIME EMPLOYMENT AGREEMENT
-
-This Part-Time Employment Agreement is made on {{start_date}}, between:
-
-EMPLOYER: {{company_name}}
-EMPLOYEE: {{employee_name}}
-
-1. POSITION: {{job_title}}
-
-2. HOURS: The Employee shall work approximately {{hours_per_week}} hours per week. Schedule to be determined by mutual agreement.
-
-3. COMPENSATION: ${{hourly_rate}} per hour, paid {{pay_frequency}}.
-
-4. TERM: This agreement begins on {{start_date}} and continues until terminated by either party with {{notice_period_days}} days notice.
-
-5. DUTIES: {{job_duties}}
-
-6. CONFIDENTIALITY: The Employee agrees to keep all company information confidential.
-
-Signed:
-
-EMPLOYER: _____________________ Date: __________
-
-EMPLOYEE: _____________________ Date: __________`,
-      structure: {
-        sections: [
-          { id: 's1', name: 'Position and Hours', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Compensation', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Term', order: 3, clauseIds: [] }
-        ]
-      },
-      requiredFields: {
-        company_name: { type: 'TEXT', label: 'Company Name' },
-        employee_name: { type: 'TEXT', label: 'Employee Name' },
-        job_title: { type: 'TEXT', label: 'Job Title' },
-        hours_per_week: { type: 'NUMBER', label: 'Hours per Week' },
-        hourly_rate: { type: 'CURRENCY', label: 'Hourly Rate' },
-        pay_frequency: { type: 'SELECT', label: 'Pay Frequency', options: ['weekly', 'bi-weekly', 'monthly'] },
-        start_date: { type: 'DATE', label: 'Start Date' },
-        notice_period_days: { type: 'NUMBER', label: 'Notice Period (Days)' },
-        job_duties: { type: 'TEXT', label: 'Job Duties' }
-      },
-      optionalFields: {},
-      conditionalFields: {},
-      jurisdiction: ['US'],
-      language: 'en',
-      tags: ['employment', 'part-time', 'hourly', 'simple'],
-      industry: ['Retail', 'Hospitality', 'General'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
-  });
-
-  // ========================================================================
-  // OFFER LETTER TEMPLATES
-  // ========================================================================
-
-  console.log('📄 Creating Offer Letter templates...');
-
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Job Offer Letter - Executive Level',
-      description: 'Executive-level job offer letter with comprehensive compensation package including equity, relocation, and executive benefits.',
-      contractType: ContractType.OFFER_LETTER,
-      category: ContractCategory.EMPLOYMENT,
-      isGlobal: true,
-      isActive: true,
-      version: 1,
-      content: `{{company_name}}
-{{company_address}}
-
-{{offer_date}}
-
-{{candidate_name}}
-{{candidate_address}}
-
-Dear {{candidate_name}},
-
-We are delighted to offer you the position of {{job_title}} at {{company_name}}. We believe your skills and experience make you an excellent fit for our executive team.
-
-POSITION DETAILS
-
-Title: {{job_title}}
-Department: {{department}}
-Reports To: {{reports_to}}
-Start Date: {{start_date}}
-Location: {{work_location}}
-
-COMPENSATION PACKAGE
-
-Base Salary: ${{annual_salary}} per year, paid {{pay_frequency}}
-
-Sign-On Bonus: {{#if has_signing_bonus}}${{signing_bonus}} payable on your first paycheck{{/if}}
-
-Annual Bonus Target: {{bonus_target}}% of base salary, based on individual and company performance
-
-Equity Compensation: {{#if has_equity}}{{equity_type}} - {{equity_amount}} {{equity_units}}, vesting over {{vesting_years}} years{{/if}}
-
-BENEFITS
-
-- Comprehensive health, dental, and vision insurance for you and your family
-- {{pto_days}} days paid time off annually
-- 401(k) with {{match_percentage}}% company match
-- Life and disability insurance
-- Executive perks: {{executive_perks}}
-
-RELOCATION
-
-{{#if has_relocation}}We will provide a relocation package of ${{relocation_amount}} to assist with your move to {{work_location}}.{{/if}}
-
-EMPLOYMENT TERMS
-
-This is an at-will employment position. You will be required to sign our standard Employment Agreement and Confidentiality & IP Assignment Agreement.
-
-CONTINGENCIES
-
-This offer is contingent upon:
-- Satisfactory completion of background check
-- Proof of eligibility to work in the United States
-{{additional_contingencies}}
-
-ACCEPTANCE
-
-To accept this offer, please sign and return this letter by {{response_deadline}}. If you have any questions, please contact {{contact_person}} at {{contact_email}}.
-
-We are excited about the prospect of you joining our team and look forward to your positive response.
-
-Sincerely,
-
-{{signatory_name}}
-{{signatory_title}}
-
-
-ACCEPTANCE
-
-I accept the position of {{job_title}} with {{company_name}} under the terms outlined above.
-
-Signature: _____________________________ Date: __________
-
-Print Name: {{candidate_name}}`,
-      structure: {
-        sections: [
-          { id: 's1', name: 'Position Details', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Compensation Package', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Benefits', order: 3, clauseIds: [] },
-          { id: 's4', name: 'Terms and Contingencies', order: 4, clauseIds: [] }
-        ]
-      },
-      requiredFields: {
-        company_name: { type: 'TEXT', label: 'Company Name' },
-        company_address: { type: 'TEXT', label: 'Company Address' },
-        offer_date: { type: 'DATE', label: 'Offer Date' },
-        candidate_name: { type: 'TEXT', label: 'Candidate Name' },
-        candidate_address: { type: 'TEXT', label: 'Candidate Address' },
-        job_title: { type: 'TEXT', label: 'Job Title' },
-        department: { type: 'TEXT', label: 'Department' },
-        reports_to: { type: 'TEXT', label: 'Reports To' },
-        start_date: { type: 'DATE', label: 'Start Date' },
-        work_location: { type: 'TEXT', label: 'Work Location' },
-        annual_salary: { type: 'CURRENCY', label: 'Annual Salary' },
-        pay_frequency: { type: 'SELECT', label: 'Pay Frequency', options: ['bi-weekly', 'semi-monthly', 'monthly'] },
-        bonus_target: { type: 'PERCENTAGE', label: 'Bonus Target %' },
-        pto_days: { type: 'NUMBER', label: 'PTO Days' },
-        match_percentage: { type: 'PERCENTAGE', label: '401(k) Match %' },
-        response_deadline: { type: 'DATE', label: 'Response Deadline' },
-        contact_person: { type: 'TEXT', label: 'Contact Person' },
-        contact_email: { type: 'TEXT', label: 'Contact Email' },
-        signatory_name: { type: 'TEXT', label: 'Signatory Name' },
-        signatory_title: { type: 'TEXT', label: 'Signatory Title' }
-      },
-      optionalFields: {
-        has_signing_bonus: { type: 'BOOLEAN', label: 'Include Signing Bonus' },
-        signing_bonus: { type: 'CURRENCY', label: 'Signing Bonus Amount' },
-        has_equity: { type: 'BOOLEAN', label: 'Include Equity' },
-        equity_type: { type: 'SELECT', label: 'Equity Type', options: ['Stock Options', 'RSUs', 'Restricted Stock'] },
-        equity_amount: { type: 'NUMBER', label: 'Equity Amount' },
-        equity_units: { type: 'TEXT', label: 'Equity Units' },
-        vesting_years: { type: 'NUMBER', label: 'Vesting Years' },
-        executive_perks: { type: 'TEXT', label: 'Executive Perks' },
-        has_relocation: { type: 'BOOLEAN', label: 'Include Relocation' },
-        relocation_amount: { type: 'CURRENCY', label: 'Relocation Amount' },
-        additional_contingencies: { type: 'TEXT', label: 'Additional Contingencies' }
-      },
-      conditionalFields: {},
-      jurisdiction: ['US'],
-      language: 'en',
-      tags: ['offer', 'executive', 'comprehensive', 'equity'],
-      industry: ['Technology', 'Finance', 'Corporate'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
-  });
-
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Job Offer Letter - Standard',
-      description: 'Standard job offer letter for mid-level positions with typical benefits package.',
-      contractType: ContractType.OFFER_LETTER,
-      category: ContractCategory.EMPLOYMENT,
-      isGlobal: true,
-      isActive: true,
-      version: 1,
-      content: `{{company_name}}
-
-{{offer_date}}
-
-Dear {{candidate_name}},
-
-We are pleased to offer you the position of {{job_title}} with {{company_name}}.
-
-Position: {{job_title}}
-Start Date: {{start_date}}
-Salary: ${{annual_salary}} per year
-Benefits: Health insurance, {{pto_days}} days PTO, 401(k)
-
-This offer is contingent upon background check completion.
-
-Please respond by {{response_deadline}}.
-
-Sincerely,
-{{hiring_manager}}
-
-I accept: _____________________ Date: __________`,
-      structure: {
-        sections: [
-          { id: 's1', name: 'Offer Details', order: 1, clauseIds: [] }
-        ]
-      },
-      requiredFields: {
-        company_name: { type: 'TEXT', label: 'Company Name' },
-        offer_date: { type: 'DATE', label: 'Offer Date' },
-        candidate_name: { type: 'TEXT', label: 'Candidate Name' },
-        job_title: { type: 'TEXT', label: 'Job Title' },
-        start_date: { type: 'DATE', label: 'Start Date' },
-        annual_salary: { type: 'CURRENCY', label: 'Annual Salary' },
-        pto_days: { type: 'NUMBER', label: 'PTO Days' },
-        response_deadline: { type: 'DATE', label: 'Response Deadline' },
-        hiring_manager: { type: 'TEXT', label: 'Hiring Manager Name' }
-      },
-      optionalFields: {},
-      conditionalFields: {},
-      jurisdiction: ['US'],
-      language: 'en',
-      tags: ['offer', 'standard', 'simple'],
-      industry: ['General'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
-  });
-
-  // ========================================================================
-  // NDA TEMPLATES
-  // ========================================================================
-
-  console.log('📄 Creating NDA templates...');
-
-  await prisma.contractTemplate.create({
-    data: {
+  await prisma.contractTemplate.upsert({
+    where: { id: 'template-nda-mutual' },
+    update: {},
+    create: {
+      id: 'template-nda-mutual',
       name: 'Mutual Non-Disclosure Agreement',
-      description: 'Mutual NDA for two parties sharing confidential information with each other.',
-      contractType: ContractType.NDA,
-      category: ContractCategory.LEGAL,
+      description: 'Mutual NDA for two parties sharing confidential information',
+      contractType: 'NDA',
+      category: 'CONFIDENTIALITY',
       isGlobal: true,
       isActive: true,
       version: 1,
-      content: `MUTUAL NON-DISCLOSURE AGREEMENT
-
-This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of {{effective_date}}, by and between:
-
-PARTY A: {{party_a_name}}, a {{party_a_type}} with principal place of business at {{party_a_address}}
-
-PARTY B: {{party_b_name}}, a {{party_b_type}} with principal place of business at {{party_b_address}}
-
-(each a "Party" and collectively the "Parties")
-
-RECITALS
-
-The Parties wish to explore a business relationship relating to: {{business_purpose}}
-
-In connection with this relationship, each Party may disclose to the other certain confidential and proprietary information.
-
-AGREEMENT
-
-1. DEFINITION OF CONFIDENTIAL INFORMATION
-
-"Confidential Information" means all information disclosed by either Party to the other Party, whether orally or in writing, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure, including but not limited to:
-
-- Technical data, trade secrets, know-how, research, product plans, products, services, customers, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, hardware configuration information
-- Business information including pricing, costs, profits, markets, sales, and strategic plans
-- Any other information marked as "Confidential" or "Proprietary"
-
-2. EXCLUSIONS
-
-Confidential Information shall not include information that:
-
-a) Is or becomes publicly available through no breach of this Agreement
-b) Was rightfully known to the receiving Party prior to disclosure
-c) Is rightfully received by the receiving Party from a third party without breach of any confidentiality obligation
-d) Is independently developed by the receiving Party without use of the Confidential Information
-
-3. OBLIGATIONS
-
-Each Party agrees to:
-
-a) Hold the other Party's Confidential Information in strict confidence
-b) Not disclose Confidential Information to any third parties without prior written consent
-c) Not use Confidential Information for any purpose other than evaluating the business relationship
-d) Limit access to Confidential Information to employees and contractors with a need to know
-e) Protect Confidential Information with at least the same degree of care used to protect its own confidential information, but in no case less than reasonable care
-
-4. TERM
-
-This Agreement shall remain in effect for {{term_years}} years from the Effective Date. The confidentiality obligations shall survive termination for an additional {{survival_years}} years.
-
-5. RETURN OF MATERIALS
-
-Upon termination or at any time upon request, each Party shall promptly return or destroy all Confidential Information and certify in writing that all such materials have been returned or destroyed.
-
-6. NO LICENSE
-
-Nothing in this Agreement grants any license or rights in any intellectual property.
-
-7. REMEDIES
-
-Each Party acknowledges that breach of this Agreement may cause irreparable harm for which monetary damages may be inadequate, and agrees that the non-breaching Party shall be entitled to seek equitable relief, including injunction and specific performance.
-
-8. GOVERNING LAW
-
-This Agreement shall be governed by the laws of {{governing_law}}.
-
-9. ENTIRE AGREEMENT
-
-This Agreement constitutes the entire agreement between the Parties concerning confidentiality and supersedes all prior agreements.
-
-IN WITNESS WHEREOF, the Parties have executed this Agreement as of the date first written above.
-
-PARTY A: {{party_a_name}}
-
-By: _______________________
-Name: {{party_a_signatory}}
-Title: {{party_a_title}}
-Date: __________
-
-PARTY B: {{party_b_name}}
-
-By: _______________________
-Name: {{party_b_signatory}}
-Title: {{party_b_title}}
-Date: __________`,
+      content: `<h1>MUTUAL NON-DISCLOSURE AGREEMENT</h1>
+<p>Between {{party_a_name}} and {{party_b_name}}.</p>
+<p>Effective Date: {{effective_date}}</p>
+<p>Purpose: {{purpose}}</p>`,
       structure: {
         sections: [
-          { id: 's1', name: 'Definitions', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Obligations', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Term and Termination', order: 3, clauseIds: [] },
-          { id: 's4', name: 'General Provisions', order: 4, clauseIds: [] }
-        ]
+          { id: 's1', name: 'Definitions', order: 1 },
+          { id: 's2', name: 'Obligations', order: 2 },
+          { id: 's3', name: 'Term', order: 3 },
+        ],
       },
       requiredFields: {
-        effective_date: { type: 'DATE', label: 'Effective Date' },
         party_a_name: { type: 'TEXT', label: 'Party A Name' },
-        party_a_type: { type: 'TEXT', label: 'Party A Entity Type' },
-        party_a_address: { type: 'TEXT', label: 'Party A Address' },
         party_b_name: { type: 'TEXT', label: 'Party B Name' },
-        party_b_type: { type: 'TEXT', label: 'Party B Entity Type' },
-        party_b_address: { type: 'TEXT', label: 'Party B Address' },
-        business_purpose: { type: 'TEXT', label: 'Purpose of Relationship' },
-        term_years: { type: 'NUMBER', label: 'Agreement Term (Years)' },
-        survival_years: { type: 'NUMBER', label: 'Survival Period (Years)' },
-        governing_law: { type: 'TEXT', label: 'Governing Law' },
-        party_a_signatory: { type: 'TEXT', label: 'Party A Signatory Name' },
-        party_a_title: { type: 'TEXT', label: 'Party A Signatory Title' },
-        party_b_signatory: { type: 'TEXT', label: 'Party B Signatory Name' },
-        party_b_title: { type: 'TEXT', label: 'Party B Signatory Title' }
+        effective_date: { type: 'DATE', label: 'Effective Date' },
+        purpose: { type: 'TEXT', label: 'Purpose' },
       },
       optionalFields: {},
       conditionalFields: {},
       jurisdiction: ['US', 'UK', 'EU'],
-      governingLaw: 'State of Delaware',
       language: 'en',
-      tags: ['nda', 'mutual', 'confidentiality', 'two-way'],
-      industry: ['Technology', 'Business', 'General'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
+      tags: ['nda', 'mutual', 'confidentiality'],
+      industry: ['General'],
+      createdBy: john.id,
+    },
   });
 
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Unilateral Non-Disclosure Agreement',
-      description: 'One-way NDA where only one party discloses confidential information.',
-      contractType: ContractType.NDA,
-      category: ContractCategory.LEGAL,
+  await prisma.contractTemplate.upsert({
+    where: { id: 'template-consulting' },
+    update: {},
+    create: {
+      id: 'template-consulting',
+      name: 'Independent Contractor Agreement',
+      description: 'Consulting agreement for independent contractors',
+      contractType: 'CONSULTING',
+      category: 'CONSULTING_PROFESSIONAL',
       isGlobal: true,
       isActive: true,
       version: 1,
-      content: `UNILATERAL NON-DISCLOSURE AGREEMENT
-
-This Agreement is made on {{effective_date}}, between:
-
-DISCLOSING PARTY: {{discloser_name}}
-RECEIVING PARTY: {{recipient_name}}
-
-Purpose: {{purpose}}
-
-1. The Receiving Party agrees to hold all Confidential Information disclosed by the Disclosing Party in strict confidence.
-
-2. The Receiving Party shall not disclose, copy, or use such information except for the stated purpose.
-
-3. This obligation shall continue for {{term_years}} years.
-
-4. Governed by the laws of {{governing_law}}.
-
-DISCLOSING PARTY: ___________________ Date: ___________
-
-RECEIVING PARTY: ___________________ Date: ___________`,
+      content: `<h1>INDEPENDENT CONTRACTOR AGREEMENT</h1>
+<p>Company: {{company_name}}</p>
+<p>Consultant: {{consultant_name}}</p>
+<h2>Scope of Work</h2>
+<p>{{scope_of_work}}</p>
+<h2>Compensation</h2>
+<p>Rate: ${{hourly_rate}}/hour</p>`,
       structure: {
         sections: [
-          { id: 's1', name: 'Agreement', order: 1, clauseIds: [] }
-        ]
+          { id: 's1', name: 'Scope', order: 1 },
+          { id: 's2', name: 'Compensation', order: 2 },
+          { id: 's3', name: 'IP Rights', order: 3 },
+        ],
       },
       requiredFields: {
-        effective_date: { type: 'DATE', label: 'Effective Date' },
-        discloser_name: { type: 'TEXT', label: 'Disclosing Party Name' },
-        recipient_name: { type: 'TEXT', label: 'Receiving Party Name' },
-        purpose: { type: 'TEXT', label: 'Purpose' },
-        term_years: { type: 'NUMBER', label: 'Term (Years)' },
-        governing_law: { type: 'TEXT', label: 'Governing Law' }
+        company_name: { type: 'TEXT', label: 'Company Name' },
+        consultant_name: { type: 'TEXT', label: 'Consultant Name' },
+        scope_of_work: { type: 'TEXT', label: 'Scope of Work' },
+        hourly_rate: { type: 'CURRENCY', label: 'Hourly Rate' },
       },
       optionalFields: {},
       conditionalFields: {},
       jurisdiction: ['US'],
       language: 'en',
-      tags: ['nda', 'unilateral', 'one-way', 'simple'],
-      industry: ['General'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
+      tags: ['consulting', 'independent contractor', 'freelance'],
+      industry: ['Professional Services'],
+      createdBy: jane.id,
+    },
   });
 
-  // ========================================================================
-  // VENDOR/SERVICE AGREEMENT TEMPLATES
-  // ========================================================================
-
-  console.log('📄 Creating Vendor/Service Agreement templates...');
-
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Master Services Agreement (MSA)',
-      description: 'Comprehensive MSA for ongoing service relationships with scope of work, payment terms, and liability provisions.',
-      contractType: ContractType.VENDOR_SERVICE,
-      category: ContractCategory.VENDOR_SUPPLIER,
-      isGlobal: true,
-      isActive: true,
-      version: 1,
-      content: `MASTER SERVICES AGREEMENT
-
-This Master Services Agreement ("Agreement") is entered into as of {{effective_date}}, by and between:
-
-CLIENT: {{client_name}}, a {{client_type}} with principal place of business at {{client_address}}
-
-SERVICE PROVIDER: {{provider_name}}, a {{provider_type}} with principal place of business at {{provider_address}}
-
-1. SERVICES
-
-1.1 Scope: The Service Provider shall provide the following services ("Services"):
-{{service_description}}
-
-1.2 Service Level: Services shall be performed in accordance with the Service Level Agreement attached as Exhibit A.
-
-1.3 Statements of Work: Specific projects shall be defined in individual Statements of Work ("SOWs") which shall reference this Agreement.
-
-2. TERM AND TERMINATION
-
-2.1 Term: This Agreement shall commence on {{effective_date}} and continue for {{initial_term_months}} months.
-
-2.2 Renewal: This Agreement shall automatically renew for successive {{renewal_term_months}}-month periods unless either party provides {{termination_notice_days}} days written notice.
-
-2.3 Termination for Convenience: Either party may terminate this Agreement for convenience with {{termination_notice_days}} days written notice.
-
-2.4 Termination for Cause: Either party may terminate immediately upon written notice if the other party materially breaches this Agreement and fails to cure within {{cure_period_days}} days.
-
-3. FEES AND PAYMENT
-
-3.1 Fees: Client shall pay Service Provider according to the fee schedule:
-{{fee_structure}}
-
-3.2 Expenses: {{#if reimburse_expenses}}Client shall reimburse pre-approved expenses with proper documentation.{{/if}}
-
-3.3 Payment Terms: Invoices are due within {{payment_terms_days}} days of invoice date.
-
-3.4 Late Payment: Late payments shall accrue interest at {{late_fee_percentage}}% per month.
-
-4. INTELLECTUAL PROPERTY
-
-4.1 Pre-Existing IP: Each party retains all rights to its pre-existing intellectual property.
-
-4.2 Work Product: {{ip_ownership_type}}
-{{#if client_owns_ip}}All work product created under this Agreement shall be owned exclusively by Client as "work made for hire."{{/if}}
-{{#if provider_owns_ip}}Service Provider retains ownership of all work product, and grants Client a non-exclusive license to use deliverables.{{/if}}
-
-5. CONFIDENTIALITY
-
-5.1 Each party agrees to maintain the confidentiality of the other party's Confidential Information.
-
-5.2 Confidentiality obligations shall survive termination for {{confidentiality_years}} years.
-
-6. WARRANTIES
-
-6.1 Service Provider warrants that:
-   a) Services will be performed in a professional and workmanlike manner
-   b) Services will comply with applicable laws and regulations
-   c) It has the right and authority to enter into this Agreement
-
-6.2 Warranty Period: {{warranty_period_days}} days from delivery.
-
-7. LIMITATION OF LIABILITY
-
-7.1 EXCEPT FOR BREACHES OF CONFIDENTIALITY OR INDEMNIFICATION OBLIGATIONS, NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
-
-7.2 Maximum Liability: Each party's maximum liability shall not exceed {{liability_cap_type}}.
-{{#if liability_cap_amount}}${{liability_cap_amount}}{{/if}}
-{{#if liability_cap_fees}}The fees paid in the {{liability_cap_period}} preceding the claim{{/if}}
-
-8. INDEMNIFICATION
-
-8.1 Service Provider shall indemnify Client against claims arising from:
-   a) Service Provider's negligence or willful misconduct
-   b) Infringement of third-party intellectual property rights
-   c) Violation of applicable laws
-
-8.2 Client shall indemnify Service Provider against claims arising from Client's use of deliverables in a manner not authorized by this Agreement.
-
-9. INSURANCE
-
-Service Provider shall maintain the following insurance:
-- General Liability: ${{general_liability_amount}}
-- Professional Liability: ${{professional_liability_amount}}
-{{#if cyber_insurance}}
-- Cyber Liability: ${{cyber_liability_amount}}
-{{/if}}
-
-10. INDEPENDENT CONTRACTOR
-
-Service Provider is an independent contractor, not an employee or agent of Client.
-
-11. GOVERNING LAW AND DISPUTE RESOLUTION
-
-11.1 Governing Law: {{governing_law}}
-
-11.2 Dispute Resolution: {{dispute_resolution_method}}
-{{#if arbitration}}Disputes shall be resolved through binding arbitration in {{arbitration_location}}.{{/if}}
-{{#if litigation}}Disputes shall be resolved in the courts of {{litigation_venue}}.{{/if}}
-
-12. GENERAL PROVISIONS
-
-12.1 Entire Agreement: This Agreement constitutes the entire agreement between the parties.
-
-12.2 Amendments: This Agreement may only be amended in writing signed by both parties.
-
-12.3 Assignment: Neither party may assign this Agreement without the other party's written consent.
-
-12.4 Notices: All notices shall be sent to the addresses listed above.
-
-IN WITNESS WHEREOF, the parties have executed this Agreement.
-
-CLIENT: {{client_name}}
-
-By: _______________________
-Name: {{client_signatory}}
-Title: {{client_title}}
-Date: __________
-
-SERVICE PROVIDER: {{provider_name}}
-
-By: _______________________
-Name: {{provider_signatory}}
-Title: {{provider_title}}
-Date: __________`,
-      structure: {
-        sections: [
-          { id: 's1', name: 'Services', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Term and Termination', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Fees and Payment', order: 3, clauseIds: [] },
-          { id: 's4', name: 'Intellectual Property', order: 4, clauseIds: [] },
-          { id: 's5', name: 'Warranties and Liability', order: 5, clauseIds: [] },
-          { id: 's6', name: 'General Provisions', order: 6, clauseIds: [] }
-        ]
-      },
-      requiredFields: {
-        effective_date: { type: 'DATE', label: 'Effective Date' },
-        client_name: { type: 'TEXT', label: 'Client Name' },
-        client_type: { type: 'TEXT', label: 'Client Entity Type' },
-        client_address: { type: 'TEXT', label: 'Client Address' },
-        provider_name: { type: 'TEXT', label: 'Provider Name' },
-        provider_type: { type: 'TEXT', label: 'Provider Entity Type' },
-        provider_address: { type: 'TEXT', label: 'Provider Address' },
-        service_description: { type: 'TEXT', label: 'Service Description' },
-        initial_term_months: { type: 'NUMBER', label: 'Initial Term (Months)' },
-        renewal_term_months: { type: 'NUMBER', label: 'Renewal Term (Months)' },
-        termination_notice_days: { type: 'NUMBER', label: 'Termination Notice (Days)' },
-        cure_period_days: { type: 'NUMBER', label: 'Cure Period (Days)' },
-        fee_structure: { type: 'TEXT', label: 'Fee Structure' },
-        payment_terms_days: { type: 'NUMBER', label: 'Payment Terms (Days)' },
-        late_fee_percentage: { type: 'PERCENTAGE', label: 'Late Fee %' },
-        confidentiality_years: { type: 'NUMBER', label: 'Confidentiality Period (Years)' },
-        warranty_period_days: { type: 'NUMBER', label: 'Warranty Period (Days)' },
-        general_liability_amount: { type: 'CURRENCY', label: 'General Liability Insurance' },
-        professional_liability_amount: { type: 'CURRENCY', label: 'Professional Liability Insurance' },
-        governing_law: { type: 'TEXT', label: 'Governing Law' },
-        dispute_resolution_method: { type: 'SELECT', label: 'Dispute Resolution', options: ['Arbitration', 'Litigation'] },
-        client_signatory: { type: 'TEXT', label: 'Client Signatory' },
-        client_title: { type: 'TEXT', label: 'Client Title' },
-        provider_signatory: { type: 'TEXT', label: 'Provider Signatory' },
-        provider_title: { type: 'TEXT', label: 'Provider Title' }
-      },
-      optionalFields: {
-        reimburse_expenses: { type: 'BOOLEAN', label: 'Reimburse Expenses' },
-        ip_ownership_type: { type: 'SELECT', label: 'IP Ownership', options: ['Client Owns', 'Provider Owns'] },
-        client_owns_ip: { type: 'BOOLEAN', label: 'Client Owns IP' },
-        provider_owns_ip: { type: 'BOOLEAN', label: 'Provider Owns IP' },
-        liability_cap_type: { type: 'SELECT', label: 'Liability Cap Type', options: ['Fixed Amount', 'Fees Based'] },
-        liability_cap_amount: { type: 'CURRENCY', label: 'Liability Cap Amount' },
-        liability_cap_fees: { type: 'BOOLEAN', label: 'Cap Based on Fees' },
-        liability_cap_period: { type: 'SELECT', label: 'Fee Period', options: ['12 months', '6 months', '3 months'] },
-        cyber_insurance: { type: 'BOOLEAN', label: 'Require Cyber Insurance' },
-        cyber_liability_amount: { type: 'CURRENCY', label: 'Cyber Liability Amount' },
-        arbitration: { type: 'BOOLEAN', label: 'Use Arbitration' },
-        arbitration_location: { type: 'TEXT', label: 'Arbitration Location' },
-        litigation: { type: 'BOOLEAN', label: 'Use Litigation' },
-        litigation_venue: { type: 'TEXT', label: 'Litigation Venue' }
-      },
-      conditionalFields: {},
-      jurisdiction: ['US'],
-      governingLaw: 'State of New York',
-      language: 'en',
-      tags: ['msa', 'services', 'vendor', 'comprehensive'],
-      industry: ['Technology', 'Professional Services', 'Business'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
-  });
+  console.log('✅ Created 3 contract templates');
 
   // ========================================================================
-  // CONSULTING AGREEMENT TEMPLATES
+  // SUMMARY
   // ========================================================================
-
-  console.log('📄 Creating Consulting Agreement templates...');
-
-  await prisma.contractTemplate.create({
-    data: {
-      name: 'Independent Contractor Consulting Agreement',
-      description: 'Comprehensive agreement for independent consultants including scope, deliverables, and IP assignment.',
-      contractType: ContractType.CONSULTING,
-      category: ContractCategory.PROFESSIONAL_SERVICES,
-      isGlobal: true,
-      isActive: true,
-      version: 1,
-      content: `INDEPENDENT CONTRACTOR CONSULTING AGREEMENT
-
-This Consulting Agreement ("Agreement") is entered into as of {{effective_date}}, by and between:
-
-COMPANY: {{company_name}}, located at {{company_address}}
-
-CONSULTANT: {{consultant_name}}, located at {{consultant_address}}
-
-1. SERVICES
-
-1.1 The Consultant agrees to provide the following services:
-{{scope_of_work}}
-
-1.2 Deliverables:
-{{deliverables}}
-
-1.3 Time Commitment: {{#if hours_specified}}Approximately {{hours_per_week}} hours per week{{/if}}
-
-2. TERM
-
-This Agreement shall begin on {{start_date}} and continue {{#if fixed_term}}until {{end_date}}{{/if}}{{#if ongoing}}on an ongoing basis until terminated by either party with {{notice_days}} days notice{{/if}}.
-
-3. COMPENSATION
-
-3.1 Rate: The Company shall pay Consultant:
-{{compensation_structure}}
-
-3.2 Expenses: {{#if reimburse_expenses}}Company shall reimburse pre-approved business expenses with receipts{{/if}}
-
-3.3 Payment Schedule: Invoices due within {{payment_days}} days
-
-3.4 Taxes: Consultant is responsible for all taxes as an independent contractor and will receive a 1099 form.
-
-4. INDEPENDENT CONTRACTOR STATUS
-
-4.1 Consultant is an independent contractor, not an employee.
-
-4.2 Consultant is responsible for own taxes, insurance, and benefits.
-
-4.3 Consultant may work for other clients unless prohibited below.
-
-4.4 Exclusivity: {{#if is_exclusive}}Consultant agrees not to work for competitors during the term{{/if}}{{#if not_exclusive}}Consultant may work for other clients{{/if}}
-
-5. INTELLECTUAL PROPERTY
-
-5.1 All work product, inventions, and intellectual property created by Consultant for Company shall be owned exclusively by Company.
-
-5.2 Consultant hereby assigns all rights, title, and interest in such work to Company.
-
-6. CONFIDENTIALITY
-
-Consultant agrees to keep all Company confidential information strictly confidential during and after the term of this Agreement.
-
-7. NON-SOLICITATION
-
-{{#if has_non_solicit}}For {{non_solicit_months}} months after termination, Consultant shall not solicit Company employees or clients.{{/if}}
-
-8. LIABILITY AND INDEMNIFICATION
-
-8.1 Consultant shall indemnify Company against claims arising from Consultant's negligence or breach of this Agreement.
-
-8.2 Maximum liability is limited to {{liability_amount}}.
-
-9. TERMINATION
-
-9.1 Either party may terminate for convenience with {{notice_days}} days notice.
-
-9.2 Either party may terminate immediately for material breach.
-
-10. GENERAL PROVISIONS
-
-10.1 Governing Law: {{governing_law}}
-
-10.2 Entire Agreement: This Agreement constitutes the entire agreement between the parties.
-
-10.3 Amendments must be in writing and signed by both parties.
-
-COMPANY: {{company_name}}
-
-By: _______________________
-Name: {{company_signatory}}
-Title: {{company_title}}
-Date: __________
-
-CONSULTANT: {{consultant_name}}
-
-Signature: _______________________
-Date: __________
-
-Tax ID/SSN: _______________________`,
-      structure: {
-        sections: [
-          { id: 's1', name: 'Services and Deliverables', order: 1, clauseIds: [] },
-          { id: 's2', name: 'Compensation', order: 2, clauseIds: [] },
-          { id: 's3', name: 'Independent Contractor Status', order: 3, clauseIds: [] },
-          { id: 's4', name: 'IP and Confidentiality', order: 4, clauseIds: [] },
-          { id: 's5', name: 'Termination', order: 5, clauseIds: [] }
-        ]
-      },
-      requiredFields: {
-        effective_date: { type: 'DATE', label: 'Effective Date' },
-        company_name: { type: 'TEXT', label: 'Company Name' },
-        company_address: { type: 'TEXT', label: 'Company Address' },
-        consultant_name: { type: 'TEXT', label: 'Consultant Name' },
-        consultant_address: { type: 'TEXT', label: 'Consultant Address' },
-        scope_of_work: { type: 'TEXT', label: 'Scope of Work' },
-        deliverables: { type: 'TEXT', label: 'Deliverables' },
-        compensation_structure: { type: 'TEXT', label: 'Compensation Structure' },
-        payment_days: { type: 'NUMBER', label: 'Payment Terms (Days)' },
-        notice_days: { type: 'NUMBER', label: 'Notice Period (Days)' },
-        liability_amount: { type: 'CURRENCY', label: 'Liability Limit' },
-        governing_law: { type: 'TEXT', label: 'Governing Law' },
-        company_signatory: { type: 'TEXT', label: 'Company Signatory' },
-        company_title: { type: 'TEXT', label: 'Signatory Title' }
-      },
-      optionalFields: {
-        hours_specified: { type: 'BOOLEAN', label: 'Specify Hours' },
-        hours_per_week: { type: 'NUMBER', label: 'Hours per Week' },
-        fixed_term: { type: 'BOOLEAN', label: 'Fixed Term' },
-        end_date: { type: 'DATE', label: 'End Date' },
-        ongoing: { type: 'BOOLEAN', label: 'Ongoing Term' },
-        start_date: { type: 'DATE', label: 'Start Date' },
-        reimburse_expenses: { type: 'BOOLEAN', label: 'Reimburse Expenses' },
-        is_exclusive: { type: 'BOOLEAN', label: 'Exclusive Agreement' },
-        not_exclusive: { type: 'BOOLEAN', label: 'Non-Exclusive' },
-        has_non_solicit: { type: 'BOOLEAN', label: 'Include Non-Solicitation' },
-        non_solicit_months: { type: 'NUMBER', label: 'Non-Solicit Period (Months)' }
-      },
-      conditionalFields: {},
-      jurisdiction: ['US'],
-      language: 'en',
-      tags: ['consulting', 'independent contractor', '1099', 'freelance'],
-      industry: ['Technology', 'Professional Services', 'Business'],
-      createdById: systemUser.id,
-      updatedById: systemUser.id
-    }
-  });
-
-  console.log('✅ Created 8 contract templates');
-
-  console.log('🎉 Seed completed successfully!');
+  console.log('\n🎉 Seed completed successfully!\n');
+  console.log('Summary:');
+  console.log('- 5 Demo Users');
+  console.log('- 2 Organizations');
+  console.log('- 4 Organization Members');
+  console.log('- 3 Proposals');
+  console.log('- 2 Comments');
+  console.log('- 2 User Connections');
+  console.log('- 5 Contracts (Employment, Vendor, NDA, Consulting, Lease)');
+  console.log('- 3 Counterparties');
+  console.log('- 4 Obligations');
+  console.log('- 3 Milestones');
+  console.log('- 2 Amendments');
+  console.log('- 6 Reminders');
+  console.log('- 4 Notifications');
+  console.log('- 2+ Messages');
+  console.log('- 5 Audit Logs');
+  console.log('- 3 Contract Templates');
+  console.log('\n📝 Demo Credentials:');
+  console.log('Email: john.doe@techcorp.com');
+  console.log('Password: Demo123!');
+  console.log('\nAll users have the same password: Demo123!');
 }
 
 main()
