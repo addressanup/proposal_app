@@ -12,9 +12,11 @@ import DashboardPage from './pages/DashboardPage';
 import TemplatesPage from './pages/TemplatesPage';
 import TemplateDetailPage from './pages/TemplateDetailPage';
 import CreateTemplatePage from './pages/CreateTemplatePage';
+import EditTemplatePage from './pages/EditTemplatePage';
 import ContractsPage from './pages/ContractsPage';
 import ContractDetailPage from './pages/ContractDetailPage';
 import CreateContractPage from './pages/CreateContractPage';
+import EditContractPage from './pages/EditContractPage';
 import ProposalsPage from './pages/ProposalsPage';
 import ProposalDetailPage from './pages/ProposalDetailPage';
 import CreateProposalPage from './pages/CreateProposalPage';
@@ -162,6 +164,15 @@ function App() {
           />
 
           <Route
+            path="/templates/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditTemplatePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/contracts"
             element={
               <ProtectedRoute>
@@ -184,6 +195,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ContractDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/contracts/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditContractPage />
               </ProtectedRoute>
             }
           />

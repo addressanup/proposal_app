@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { proposalService } from '../../services/proposal.service';
+import { contractService } from '../../services/contract.service';
 import { ProposalVersion } from '../../types/proposal.types';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
@@ -13,7 +14,8 @@ import ReactDiffViewer from 'react-diff-viewer-continued';
 interface VersionHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
+  proposalId?: string;
+  contractId?: string;
   currentTitle: string;
   onRevert?: () => void;
 }
@@ -22,6 +24,7 @@ export default function VersionHistoryModal({
   isOpen,
   onClose,
   proposalId,
+  contractId,
   currentTitle,
   onRevert,
 }: VersionHistoryModalProps) {
@@ -37,12 +40,22 @@ export default function VersionHistoryModal({
     if (isOpen) {
       loadVersions();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposalId, contractId]);
 
   const loadVersions = async () => {
     try {
       setLoading(true);
-      const data = await proposalService.getVersions(proposalId);
+      let data;
+      if (proposalId) {
+        data = await proposalService.getVersions(proposalId);
+      } else if (contractId) {
+        // For now, contracts use the same version structure
+        // This would need a contract version service in a real implementation
+        data = [];
+        toast.info('Contract version history coming soon');
+      } else {
+        data = [];
+      }
       setVersions(data);
       if (data.length > 0) {
         setSelectedVersionId(data[0].id);

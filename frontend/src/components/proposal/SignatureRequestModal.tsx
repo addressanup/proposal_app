@@ -31,7 +31,8 @@ import { format } from 'date-fns';
 interface SignatureRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  proposalId: string;
+  proposalId?: string;
+  contractId?: string;
   proposalTitle: string;
 }
 
@@ -39,6 +40,7 @@ export default function SignatureRequestModal({
   isOpen,
   onClose,
   proposalId,
+  contractId,
   proposalTitle,
 }: SignatureRequestModalProps) {
   const [requests, setRequests] = useState<SignatureRequest[]>([]);
@@ -64,12 +66,17 @@ export default function SignatureRequestModal({
     if (isOpen) {
       loadRequests();
     }
-  }, [isOpen, proposalId]);
+  }, [isOpen, proposalId, contractId]);
 
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const data = await signatureService.getProposalRequests(proposalId);
+      const id = proposalId || contractId;
+      if (!id) {
+        setRequests([]);
+        return;
+      }
+      const data = await signatureService.getProposalRequests(id);
       setRequests(data);
     } catch (error) {
       toast.error('Failed to load signature requests');
@@ -122,7 +129,7 @@ export default function SignatureRequestModal({
     try {
       setCreating(true);
       await signatureService.createRequest({
-        proposalId,
+        proposalId: proposalId || contractId,
         signatureType: formData.signatureType,
         signingOrder: formData.signingOrder,
         expiresInDays: formData.expiresInDays,

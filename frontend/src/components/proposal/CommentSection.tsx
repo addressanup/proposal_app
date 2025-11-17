@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { proposalService } from '../../services/proposal.service';
+import { contractService } from '../../services/contract.service';
 import { Comment } from '../../types/proposal.types';
 import { useAuthStore } from '../../stores/auth.store';
 import Button from '../common/Button';
@@ -8,10 +9,11 @@ import { MessageSquare, Send, Trash2, Reply } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface CommentSectionProps {
-  proposalId: string;
+  proposalId?: string;
+  contractId?: string;
 }
 
-export default function CommentSection({ proposalId }: CommentSectionProps) {
+export default function CommentSection({ proposalId, contractId }: CommentSectionProps) {
   const { user } = useAuthStore();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,12 +24,21 @@ export default function CommentSection({ proposalId }: CommentSectionProps) {
 
   useEffect(() => {
     loadComments();
-  }, [proposalId]);
+  }, [proposalId, contractId]);
 
   const loadComments = async () => {
     try {
       setLoading(true);
-      const data = await proposalService.getComments(proposalId);
+      let data;
+      if (proposalId) {
+        data = await proposalService.getComments(proposalId);
+      } else if (contractId) {
+        // For now, show a message that contract comments are coming soon
+        data = [];
+        toast.info('Contract comments coming soon');
+      } else {
+        data = [];
+      }
       // Organize comments into threaded structure
       const organized = organizeComments(data);
       setComments(organized);

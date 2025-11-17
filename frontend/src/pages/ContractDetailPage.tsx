@@ -427,7 +427,7 @@ export default function ContractDetailPage() {
           </>
         )}
 
-        {activeTab === 'comments' && <CommentSection proposalId={id!} />}
+        {activeTab === 'comments' && <CommentSection contractId={id!} />}
 
         {activeTab === 'documents' && (
           <div className="bg-white shadow-sm rounded-lg p-6">
@@ -445,7 +445,7 @@ export default function ContractDetailPage() {
       <VersionHistoryModal
         isOpen={showVersionHistory}
         onClose={() => setShowVersionHistory(false)}
-        proposalId={id!}
+        contractId={id!}
         currentTitle={contract.title}
         onRevert={fetchContract}
       />
@@ -453,7 +453,7 @@ export default function ContractDetailPage() {
       <SignatureRequestModal
         isOpen={showSignatureRequest}
         onClose={() => setShowSignatureRequest(false)}
-        proposalId={id!}
+        contractId={id!}
         proposalTitle={contract.title}
       />
     </div>
