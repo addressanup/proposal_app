@@ -41,7 +41,16 @@ export default function CreateTemplatePage() {
         contractType,
         category,
         content: content.trim(),
-        structure: {},
+        structure: {
+          sections: [
+            {
+              id: 's1',
+              name: 'Main Content',
+              order: 1,
+              clauseIds: []
+            }
+          ]
+        },
         requiredFields: {},
         optionalFields: {},
         conditionalFields: {},
