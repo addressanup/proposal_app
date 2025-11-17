@@ -2,6 +2,7 @@ import { useState, useRef, DragEvent } from 'react';
 import Button from '../common/Button';
 import { toast } from '../common/Toast';
 import { Upload, File, X, FileText, Image as ImageIcon, Loader } from 'lucide-react';
+import { documentService, Document } from '../../services/document.service';
 
 interface UploadedDocument {
   id: string;
@@ -14,9 +15,9 @@ interface UploadedDocument {
 
 interface DocumentUploadProps {
   proposalId: string;
-  onUploadComplete?: (document: UploadedDocument) => void;
+  onUploadComplete?: (document?: UploadedDocument) => void;
   existingDocuments?: UploadedDocument[];
-  onDeleteDocument?: (documentId: string) => void;
+  onDeleteDocument?: (documentId?: string) => void;
 }
 
 export default function DocumentUpload({
@@ -84,29 +85,16 @@ export default function DocumentUpload({
     try {
       setUploading(true);
 
-      // Create FormData
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('proposalId', proposalId);
-
-      // Upload file (this would call the actual API)
-      // const response = await documentService.upload(formData);
-
-      // Simulated upload
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const mockDocument: UploadedDocument = {
-        id: Math.random().toString(36).substring(7),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        uploadedAt: new Date().toISOString(),
-      };
+      // Upload file using the document service
+      const uploadedDocument = await documentService.upload({
+        file,
+        proposalId,
+      });
 
       toast.success('Document uploaded successfully!');
 
       if (onUploadComplete) {
-        onUploadComplete(mockDocument);
+        onUploadComplete(uploadedDocument);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to upload document');
@@ -124,7 +112,7 @@ export default function DocumentUpload({
     }
 
     try {
-      // await documentService.delete(documentId);
+      await documentService.delete(documentId);
       toast.success('Document deleted');
 
       if (onDeleteDocument) {

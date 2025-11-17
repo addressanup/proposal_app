@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { proposalService } from '../services/proposal.service';
+import { documentService, Document } from '../services/document.service';
 import { Proposal } from '../types/proposal.types';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -35,6 +36,8 @@ export default function ProposalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('content');
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   // Modal states
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -45,6 +48,7 @@ export default function ProposalDetailPage() {
   useEffect(() => {
     if (id) {
       loadProposal();
+      loadDocuments();
     }
   }, [id]);
 
@@ -58,6 +62,19 @@ export default function ProposalDetailPage() {
       navigate('/proposals');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDocuments = async () => {
+    try {
+      setLoadingDocuments(true);
+      const data = await documentService.getProposalDocuments(id!);
+      setDocuments(data);
+    } catch (error: any) {
+      console.error('Failed to load documents:', error);
+      // Don't show error toast for documents - they're not critical
+    } finally {
+      setLoadingDocuments(false);
     }
   };
 
@@ -221,7 +238,12 @@ export default function ProposalDetailPage() {
         {activeTab === 'comments' && <CommentSection proposalId={id!} />}
 
         {activeTab === 'documents' && (
-          <DocumentUpload proposalId={id!} existingDocuments={[]} />
+          <DocumentUpload
+            proposalId={id!}
+            existingDocuments={documents}
+            onUploadComplete={loadDocuments}
+            onDeleteDocument={loadDocuments}
+          />
         )}
       </div>
 
