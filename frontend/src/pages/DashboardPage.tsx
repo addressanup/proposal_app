@@ -192,20 +192,28 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
           <p className="text-gray-600 mt-2">
             Welcome back! Here's your complete overview.
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => navigate('/templates')}>
-            <FileText size={16} className="mr-2" />
+          <button
+            onClick={() => navigate('/templates')}
+            className="inline-flex items-center gap-2 bg-white text-gray-700 px-5 py-2.5 rounded-xl border-2 border-gray-300 hover:border-blue-600 hover:text-blue-600 hover:shadow-md transition-all font-medium"
+          >
+            <FileText size={16} />
             Browse Templates
-          </Button>
-          <Button onClick={() => navigate('/contracts/create')}>
-            <FileText size={16} className="mr-2" />
+          </button>
+          <button
+            onClick={() => navigate('/contracts/create')}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold"
+          >
+            <FileText size={16} />
             Create Contract
-          </Button>
+          </button>
         </div>
       </div>
 

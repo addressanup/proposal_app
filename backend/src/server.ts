@@ -16,6 +16,9 @@ import versionRoutes from './routes/version.routes';
 import signatureRoutes from './routes/signature.routes';
 import templateRoutes from './routes/template.routes';
 import contractRoutes from './routes/contract.routes';
+import reminderRoutes from './routes/reminder.routes';
+import messageRoutes from './routes/message.routes';
+import auditRoutes from './routes/audit.routes';
 
 // Load environment variables
 dotenv.config();
@@ -86,6 +89,9 @@ app.use('/api', versionRoutes); // Handles /api/proposals/:id/versions
 app.use('/api', signatureRoutes); // Handles /api/signature-requests and /api/sign
 app.use('/api/templates', templateRoutes);
 app.use('/api/contracts', contractRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/audit-logs', auditRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
