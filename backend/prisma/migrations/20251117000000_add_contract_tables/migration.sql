@@ -199,6 +199,7 @@ CREATE TABLE "milestones" (
     "targetDate" TIMESTAMP(3) NOT NULL,
     "actualDate" TIMESTAMP(3),
     "status" "MilestoneStatus" NOT NULL,
+    "sequence" INTEGER NOT NULL DEFAULT 0,
     "paymentAmount" DECIMAL(15,2),
     "paymentStatus" "PaymentStatus",
     "dependsOn" TEXT,

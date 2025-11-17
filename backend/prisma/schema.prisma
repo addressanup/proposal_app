@@ -1151,6 +1151,7 @@ model Milestone {
   targetDate  DateTime
   actualDate  DateTime?
   status      MilestoneStatus
+  sequence    Int              @default(0) // Order of milestones
 
   // Payment Linkage
   paymentAmount Decimal?       @db.Decimal(15, 2)
