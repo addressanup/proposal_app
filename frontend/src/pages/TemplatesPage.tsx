@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { templateService } from '../services/template.service';
 import { Template, ContractType } from '../types/template.types';
 import Button from '../components/common/Button';
 import Loading from '../components/common/Loading';
 import Badge from '../components/common/Badge';
+import { FileText, Plus, Search, Filter, Folder, Eye, Copy, Grid3x3, List } from 'lucide-react';
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
@@ -77,23 +78,49 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Contract Templates</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Choose from {templates.length} professional templates
-              </p>
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Contract Templates
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Choose from {templates.length} professional templates or create your own
+            </p>
+          </div>
+          <Link to="/templates/create">
+            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold">
+              <Plus size={20} />
+              Create Template
+            </button>
+          </Link>
+        </div>
+
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Total Templates</div>
+            <div className="text-2xl font-bold text-gray-900">{templates.length}</div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Employment</div>
+            <div className="text-2xl font-bold text-green-600">
+              {templates.filter(t => [ContractType.EMPLOYMENT, ContractType.OFFER_LETTER].includes(t.contractType)).length}
             </div>
-            <Button
-              variant="primary"
-              onClick={() => navigate('/templates/create')}
-            >
-              Create Custom Template
-            </Button>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Business</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {templates.filter(t => [ContractType.VENDOR_SERVICE, ContractType.CONSULTING, ContractType.PARTNERSHIP].includes(t.contractType)).length}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Legal</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {templates.filter(t => [ContractType.NDA, ContractType.IP_LICENSE].includes(t.contractType)).length}
+            </div>
           </div>
         </div>
       </div>
