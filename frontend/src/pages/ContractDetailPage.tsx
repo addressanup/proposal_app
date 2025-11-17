@@ -12,6 +12,9 @@ import CommentSection from '../components/proposal/CommentSection';
 import DocumentUpload from '../components/proposal/DocumentUpload';
 import SignatureRequestModal from '../components/proposal/SignatureRequestModal';
 import AmendmentsModal from '../components/contract/AmendmentsModal';
+import ObligationsModal from '../components/contract/ObligationsModal';
+import MilestonesModal from '../components/contract/MilestonesModal';
+import CounterpartiesModal from '../components/contract/CounterpartiesModal';
 import { exportContractToPDF } from '../utils/pdfExport';
 import {
   ArrowLeft,
@@ -42,6 +45,9 @@ export default function ContractDetailPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showSignatureRequest, setShowSignatureRequest] = useState(false);
   const [showAmendments, setShowAmendments] = useState(false);
+  const [showObligations, setShowObligations] = useState(false);
+  const [showMilestones, setShowMilestones] = useState(false);
+  const [showCounterparties, setShowCounterparties] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -335,9 +341,14 @@ export default function ContractDetailPage() {
             {/* Counterparties */}
             {contract.counterparties && contract.counterparties.length > 0 && (
               <div className="bg-white shadow-sm rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Counterparties ({contract.counterparties.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Counterparties ({contract.counterparties.length})
+                  </h2>
+                  <Button variant="secondary" size="sm" onClick={() => setShowCounterparties(true)}>
+                    Manage
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {contract.counterparties.map((party) => (
                     <div
@@ -365,9 +376,14 @@ export default function ContractDetailPage() {
             {/* Obligations */}
             {contract.obligations && contract.obligations.length > 0 && (
               <div className="bg-white shadow-sm rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Obligations ({contract.obligations.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Obligations ({contract.obligations.length})
+                  </h2>
+                  <Button variant="secondary" size="sm" onClick={() => setShowObligations(true)}>
+                    Manage
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {contract.obligations.map((obligation) => (
                     <div
@@ -397,9 +413,14 @@ export default function ContractDetailPage() {
             {/* Milestones */}
             {contract.milestones && contract.milestones.length > 0 && (
               <div className="bg-white shadow-sm rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Milestones ({contract.milestones.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Milestones ({contract.milestones.length})
+                  </h2>
+                  <Button variant="secondary" size="sm" onClick={() => setShowMilestones(true)}>
+                    Manage
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {contract.milestones.map((milestone) => (
                     <div
@@ -468,6 +489,30 @@ export default function ContractDetailPage() {
         onClose={() => setShowAmendments(false)}
         contractId={id!}
         contractTitle={contract.title}
+      />
+
+      <ObligationsModal
+        isOpen={showObligations}
+        onClose={() => setShowObligations(false)}
+        contractId={id!}
+        obligations={contract.obligations || []}
+        onUpdate={fetchContract}
+      />
+
+      <MilestonesModal
+        isOpen={showMilestones}
+        onClose={() => setShowMilestones(false)}
+        contractId={id!}
+        milestones={contract.milestones || []}
+        onUpdate={fetchContract}
+      />
+
+      <CounterpartiesModal
+        isOpen={showCounterparties}
+        onClose={() => setShowCounterparties(false)}
+        contractId={id!}
+        counterparties={contract.counterparties || []}
+        onUpdate={fetchContract}
       />
     </div>
   );
