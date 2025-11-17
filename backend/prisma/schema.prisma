@@ -1016,6 +1016,7 @@ model Counterparty {
   // Role in Contract
   role             PartyRole
   signingAuthority Boolean   @default(false)
+  isPrimary        Boolean   @default(false)
 
   // Background Verification (Phase 4)
   verified         Boolean   @default(false)
