@@ -26,6 +26,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import OrganizationsPage from './pages/OrganizationsPage';
 import OrganizationDetailPage from './pages/OrganizationDetailPage';
 import AuditLogsPage from './pages/AuditLogsPage';
+import RemindersPage from './pages/RemindersPage';
 
 // Layout component with navigation
 function Layout({ children }: { children: React.ReactNode }) {
@@ -83,6 +84,12 @@ function Layout({ children }: { children: React.ReactNode }) {
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 >
                   Audit Logs
+                </Link>
+                <Link
+                  to="/reminders"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  Reminders
                 </Link>
               </div>
             </div>
@@ -292,6 +299,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <AuditLogsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reminders"
+            element={
+              <ProtectedRoute>
+                <RemindersPage />
               </ProtectedRoute>
             }
           />
