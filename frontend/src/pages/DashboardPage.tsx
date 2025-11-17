@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { contractService } from '../services/contract.service';
 import { proposalService } from '../services/proposal.service';
@@ -586,7 +586,7 @@ export default function DashboardPage() {
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   color: 'blue' | 'green' | 'yellow' | 'orange' | 'purple' | 'teal';
   trend?: { value: number; isPositive: boolean };
   subtitle?: string;
@@ -638,7 +638,7 @@ function StatCard({ title, value, icon, color, trend, subtitle, onClick, alert }
 }
 
 interface QuickActionCardProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
   onClick: () => void;

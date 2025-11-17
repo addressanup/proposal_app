@@ -1,3 +1,4 @@
+import { useState, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store';
 import Button from './components/common/Button';
@@ -38,11 +39,11 @@ import ConnectionsPage from './pages/ConnectionsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Layout component with navigation
-function Layout({ children }: { children: React.ReactNode }) {
+function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const [showUserMenu, setShowUserMenu] = React.useState(false);
-  const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -357,7 +358,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 // Protected route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated) {
