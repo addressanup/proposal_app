@@ -52,6 +52,7 @@ model User {
   templatesCreated ContractTemplate[]
   obligations      Obligation[]
   amendments       Amendment[]
+  reminders        Reminder[]
 
   @@index([email])
 }
@@ -138,6 +139,7 @@ model Proposal {
   connections       Connection[]
   messages          Message[]
   signatureRequests SignatureRequest[]
+  reminders         Reminder[]
 
   @@index([organizationId])
   @@index([creatorId])
@@ -751,6 +753,7 @@ model Contract {
   obligations Obligation[]
   milestones  Milestone[]
   amendments  Amendment[]
+  reminders   Reminder[]
 
   // Metadata
   tags         String[]
@@ -1151,7 +1154,7 @@ model Milestone {
   targetDate  DateTime
   actualDate  DateTime?
   status      MilestoneStatus
-  sequence    Int              @default(0) // Order of milestones
+  sequence    Int             @default(0) // Order of milestones
 
   // Payment Linkage
   paymentAmount Decimal?       @db.Decimal(15, 2)
@@ -1223,4 +1226,91 @@ enum AmendmentStatus {
   PENDING_SIGNATURE
   EXECUTED
   REJECTED
+}
+
+// ============================================================================
+// REMINDER SYSTEM
+// ============================================================================
+
+model Reminder {
+  id String @id @default(cuid())
+
+  // User assignment
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Reminder details
+  type        ReminderType
+  status      ReminderStatus   @default(PENDING)
+  priority    ReminderPriority @default(MEDIUM)
+  title       String
+  description String?          @db.Text
+
+  // Dates
+  dueDate      DateTime
+  reminderDate DateTime
+  completedAt  DateTime?
+  sentAt       DateTime?
+
+  // Linked resources
+  contractId   String?
+  contract     Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  proposalId   String?
+  proposal     Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  obligationId String?
+  milestoneId  String?
+
+  // Recurrence
+  isRecurring        Boolean             @default(false)
+  recurringFrequency RecurringFrequency?
+  nextReminderDate   DateTime?
+  parentReminderId   String?
+  parentReminder     Reminder?           @relation("ReminderRecurrence", fields: [parentReminderId], references: [id], onDelete: SetNull)
+  childReminders     Reminder[]          @relation("ReminderRecurrence")
+
+  // Metadata
+  customData Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([dueDate])
+  @@index([reminderDate])
+  @@index([contractId])
+  @@index([proposalId])
+  @@map("reminders")
+}
+
+enum ReminderType {
+  OBLIGATION
+  MILESTONE
+  CONTRACT_EXPIRATION
+  SIGNATURE_REQUEST
+  REVIEW_DUE
+  PAYMENT_DUE
+  RENEWAL
+  CUSTOM
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum ReminderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
 }
