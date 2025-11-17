@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import TemplatesPage from './pages/TemplatesPage';
 import TemplateDetailPage from './pages/TemplateDetailPage';
+import CreateTemplatePage from './pages/CreateTemplatePage';
 import ContractsPage from './pages/ContractsPage';
 import ContractDetailPage from './pages/ContractDetailPage';
 import CreateContractPage from './pages/CreateContractPage';
@@ -107,6 +108,15 @@ function App() {
           element={
             <ProtectedRoute>
               <TemplatesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/templates/create"
+          element={
+            <ProtectedRoute>
+              <CreateTemplatePage />
             </ProtectedRoute>
           }
         />
