@@ -126,140 +126,190 @@ export default function TemplatesPage() {
       </div>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search templates..."
-                className="input w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Filter size={20} className="text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="Grid View"
+            >
+              <Grid3x3 size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="List View"
+            >
+              <List size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Search */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
             </div>
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
 
-            {/* Type Filter */}
-            <div className="w-full md:w-64">
-              <select
-                className="input w-full"
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value as ContractType | 'ALL')}
-              >
-                <option value="ALL">All Types</option>
-                <option value="EMPLOYMENT">Employment</option>
-                <option value="OFFER_LETTER">Offer Letter</option>
-                <option value="NDA">NDA</option>
-                <option value="VENDOR_SERVICE">Vendor Service</option>
-                <option value="CONSULTING">Consulting</option>
-                <option value="PARTNERSHIP">Partnership</option>
-                <option value="SALES">Sales</option>
-                <option value="LEASE">Lease</option>
-                <option value="IP_LICENSE">IP License</option>
-                <option value="SUPPLY">Supply</option>
-                <option value="PROCUREMENT">Procurement</option>
-                <option value="SUBSCRIPTION">Subscription</option>
-                <option value="FREELANCE">Freelance</option>
-                <option value="INTERNSHIP">Internship</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-2 rounded ${
-                  viewMode === 'grid'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Grid
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-2 rounded ${
-                  viewMode === 'list'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                List
-              </button>
+          {/* Type Filter */}
+          <div className="relative">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as ContractType | 'ALL')}
+              className="block w-full px-4 py-3 border border-gray-300 bg-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+            >
+              <option value="ALL">All Types</option>
+              <option value="EMPLOYMENT">Employment</option>
+              <option value="OFFER_LETTER">Offer Letter</option>
+              <option value="NDA">NDA</option>
+              <option value="VENDOR_SERVICE">Vendor Service</option>
+              <option value="CONSULTING">Consulting</option>
+              <option value="PARTNERSHIP">Partnership</option>
+              <option value="SALES">Sales</option>
+              <option value="LEASE">Lease</option>
+              <option value="IP_LICENSE">IP License</option>
+              <option value="SUPPLY">Supply</option>
+              <option value="PROCUREMENT">Procurement</option>
+              <option value="SUBSCRIPTION">Subscription</option>
+              <option value="FREELANCE">Freelance</option>
+              <option value="INTERNSHIP">Internship</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-gray-600">
-          Showing {filteredTemplates.length} of {templates.length} templates
+      {/* Results Count */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          Showing <span className="font-semibold text-gray-900">{filteredTemplates.length}</span> of <span className="font-semibold text-gray-900">{templates.length}</span> templates
         </div>
+      </div>
 
-        {/* Templates Grid/List */}
-        {filteredTemplates.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-500">No templates found matching your criteria.</p>
+      {/* Templates Grid/List */}
+      {filteredTemplates.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+            <FileText size={40} className="text-gray-400" />
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
-              <div
-                key={template.id}
-                className="card hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(`/templates/${template.id}`)}
-              >
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No templates found</h3>
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            {searchTerm || selectedType !== 'ALL'
+              ? 'Try adjusting your search or filters to find the right template'
+              : 'Get started by creating your first custom template'}
+          </p>
+          <Link to="/templates/create">
+            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold">
+              <Plus size={20} />
+              Create Custom Template
+            </button>
+          </Link>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTemplates.map((template) => (
+            <div
+              key={template.id}
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:scale-[1.02] transition-all overflow-hidden group"
+            >
+              {/* Card Header */}
+              <div className="p-6 border-b border-gray-100">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {template.name}
-                  </h3>
+                  <div className="flex-1">
+                    <Link
+                      to={`/templates/${template.id}`}
+                      className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
+                    >
+                      {template.name}
+                    </Link>
+                  </div>
                   <Badge variant={getTypeVariant(template.contractType)}>
                     {template.contractType.replace(/_/g, ' ')}
                   </Badge>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                <p className="text-sm text-gray-600 line-clamp-2">
                   {template.description || 'No description available'}
                 </p>
+              </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="text-xs text-gray-500">
-                    {template.category && (
-                      <span className="inline-flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                        </svg>
-                        {template.category}
-                      </span>
-                    )}
+              {/* Card Body */}
+              <div className="p-6">
+                {template.category && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                    <Folder size={16} className="text-gray-400" />
+                    <span>{template.category}</span>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUseTemplate(template.id);
-                    }}
-                  >
-                    Use Template
-                  </Button>
-                </div>
+                )}
 
                 {template.tags && template.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {template.tags.slice(0, 3).map((tag, index) => (
+                  <div className="flex flex-wrap gap-2">
+                    {template.tags.slice(0, 4).map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                        className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium"
                       >
                         {tag}
                       </span>
                     ))}
+                    {template.tags.length > 4 && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+                        +{template.tags.length - 4} more
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+
+              {/* Card Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <Link
+                  to={`/templates/${template.id}`}
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                >
+                  <Eye size={16} />
+                  View Details
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUseTemplate(template.id);
+                  }}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  <Copy size={14} />
+                  Use Template
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
