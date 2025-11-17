@@ -14,7 +14,8 @@ interface UploadedDocument {
 }
 
 interface DocumentUploadProps {
-  proposalId: string;
+  proposalId?: string;
+  contractId?: string;
   onUploadComplete?: (document?: UploadedDocument) => void;
   existingDocuments?: UploadedDocument[];
   onDeleteDocument?: (documentId?: string) => void;
@@ -22,6 +23,7 @@ interface DocumentUploadProps {
 
 export default function DocumentUpload({
   proposalId,
+  contractId,
   onUploadComplete,
   existingDocuments = [],
   onDeleteDocument,
@@ -89,6 +91,7 @@ export default function DocumentUpload({
       const uploadedDocument = await documentService.upload({
         file,
         proposalId,
+        contractId,
       });
 
       toast.success('Document uploaded successfully!');

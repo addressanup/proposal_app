@@ -432,7 +432,7 @@ export default function ContractDetailPage() {
         {activeTab === 'documents' && (
           <div className="bg-white shadow-sm rounded-lg p-6">
             <DocumentUpload
-              proposalId={id!}
+              contractId={id!}
               existingDocuments={documents}
               onUploadComplete={loadDocuments}
               onDeleteDocument={loadDocuments}
