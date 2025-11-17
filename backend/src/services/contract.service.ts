@@ -1,6 +1,6 @@
 import { PrismaClient, Contract, ContractStatus, ContractType, ContractCategory, CounterpartyRole, ObligationType, ObligationStatus } from '@prisma/client';
 import { populateTemplate } from './template.service';
-import { auditLog } from '../utils/audit';
+import { auditLog } from './audit.service';
 
 const prisma = new PrismaClient();
 
