@@ -1,11 +1,11 @@
 import express from 'express';
 import * as messageController from '../controllers/message.controller';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
 // All routes require authentication
-router.use(authenticateToken);
+router.use(authenticate);
 
 // Get all conversations for current user
 router.get('/conversations', messageController.getConversations);
