@@ -13,7 +13,7 @@ cmds = [
 ]
 
 [start]
-cmd = "timeout 10 npx prisma migrate deploy || echo 'Migrations skipped' && npm start"
+cmd = "npm start"
 
 [variables]
 NODE_ENV = "production"

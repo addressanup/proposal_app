@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc --skipLibCheck --noEmitOnError false || true",
-    "start": "node dist/server.js",
+    "start": "npx prisma migrate deploy || echo 'Migrations skipped' && node dist/server.js",
     "migrate": "npx prisma migrate dev",
     "studio": "npx prisma studio",
     "seed": "ts-node prisma/seed.ts",
