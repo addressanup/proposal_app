@@ -11,6 +11,7 @@ import VersionHistoryModal from '../components/proposal/VersionHistoryModal';
 import CommentSection from '../components/proposal/CommentSection';
 import DocumentUpload from '../components/proposal/DocumentUpload';
 import SignatureRequestModal from '../components/proposal/SignatureRequestModal';
+import AmendmentsModal from '../components/contract/AmendmentsModal';
 import { exportContractToPDF } from '../utils/pdfExport';
 import {
   ArrowLeft,
@@ -40,6 +41,7 @@ export default function ContractDetailPage() {
   // Modal states
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showSignatureRequest, setShowSignatureRequest] = useState(false);
+  const [showAmendments, setShowAmendments] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -219,6 +221,10 @@ export default function ContractDetailPage() {
             <Button variant="secondary" size="sm" onClick={() => setShowSignatureRequest(true)}>
               <FileSignature size={16} className="mr-2" />
               Signatures
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowAmendments(true)}>
+              <FileSignature size={16} className="mr-2" />
+              Amendments
             </Button>
             <Button variant="secondary" size="sm" onClick={handleExportPDF}>
               <Download size={16} className="mr-2" />
@@ -455,6 +461,13 @@ export default function ContractDetailPage() {
         onClose={() => setShowSignatureRequest(false)}
         contractId={id!}
         proposalTitle={contract.title}
+      />
+
+      <AmendmentsModal
+        isOpen={showAmendments}
+        onClose={() => setShowAmendments(false)}
+        contractId={id!}
+        contractTitle={contract.title}
       />
     </div>
   );
