@@ -30,8 +30,8 @@ export default function VersionHistoryModal({
 }: VersionHistoryModalProps) {
   const [versions, setVersions] = useState<ProposalVersion[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-  const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
+  const [selectedVersionNumber, setSelectedVersionNumber] = useState<number | null>(null);
+  const [compareVersionNumber, setCompareVersionNumber] = useState<number | null>(null);
   const [showDiff, setShowDiff] = useState(false);
   const [diffData, setDiffData] = useState<{ oldValue: string; newValue: string } | null>(null);
   const [reverting, setReverting] = useState(false);
@@ -58,7 +58,7 @@ export default function VersionHistoryModal({
       }
       setVersions(data);
       if (data.length > 0) {
-        setSelectedVersionId(data[0].id);
+        setSelectedVersionNumber(data[0].versionNumber);
       }
     } catch (error) {
       toast.error('Failed to load version history');
@@ -68,7 +68,7 @@ export default function VersionHistoryModal({
   };
 
   const handleCompare = async () => {
-    if (!selectedVersionId || !compareVersionId) {
+    if (!selectedVersionNumber || !compareVersionNumber || !proposalId) {
       toast.error('Please select two versions to compare');
       return;
     }
@@ -76,12 +76,13 @@ export default function VersionHistoryModal({
     try {
       setLoading(true);
       const comparison = await proposalService.compareVersions(
-        selectedVersionId,
-        compareVersionId
+        proposalId,
+        selectedVersionNumber,
+        compareVersionNumber
       );
 
-      const oldVersion = versions.find((v) => v.id === compareVersionId);
-      const newVersion = versions.find((v) => v.id === selectedVersionId);
+      const oldVersion = versions.find((v) => v.versionNumber === compareVersionNumber);
+      const newVersion = versions.find((v) => v.versionNumber === selectedVersionNumber);
 
       setDiffData({
         oldValue: oldVersion?.content || '',
@@ -95,8 +96,8 @@ export default function VersionHistoryModal({
     }
   };
 
-  const handleRevert = async (versionId: string) => {
-    const version = versions.find((v) => v.id === versionId);
+  const handleRevert = async (versionNumber: number) => {
+    const version = versions.find((v) => v.versionNumber === versionNumber);
     if (
       !window.confirm(
         `Are you sure you want to revert to version ${version?.versionNumber}? This will create a new version with the old content.`
@@ -105,9 +106,14 @@ export default function VersionHistoryModal({
       return;
     }
 
+    if (!proposalId) {
+      toast.error('Proposal ID is required');
+      return;
+    }
+
     try {
       setReverting(true);
-      await proposalService.revertToVersion(proposalId, versionId);
+      await proposalService.revertToVersion(proposalId, versionNumber);
       toast.success('Successfully reverted to previous version');
       onClose();
       if (onRevert) {
@@ -155,12 +161,12 @@ export default function VersionHistoryModal({
                         Version A
                       </label>
                       <select
-                        value={selectedVersionId || ''}
-                        onChange={(e) => setSelectedVersionId(e.target.value)}
+                        value={selectedVersionNumber || ''}
+                        onChange={(e) => setSelectedVersionNumber(Number(e.target.value))}
                         className="block w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
                         {versions.map((version) => (
-                          <option key={version.id} value={version.id}>
+                          <option key={version.id} value={version.versionNumber}>
                             v{version.versionNumber} - {version.title}
                           </option>
                         ))}
@@ -172,13 +178,13 @@ export default function VersionHistoryModal({
                         Version B
                       </label>
                       <select
-                        value={compareVersionId || ''}
-                        onChange={(e) => setCompareVersionId(e.target.value)}
+                        value={compareVersionNumber || ''}
+                        onChange={(e) => setCompareVersionNumber(Number(e.target.value))}
                         className="block w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">Select version...</option>
                         {versions.map((version) => (
-                          <option key={version.id} value={version.id}>
+                          <option key={version.id} value={version.versionNumber}>
                             v{version.versionNumber} - {version.title}
                           </option>
                         ))}
@@ -188,7 +194,7 @@ export default function VersionHistoryModal({
                       variant="primary"
                       size="sm"
                       onClick={handleCompare}
-                      disabled={!selectedVersionId || !compareVersionId}
+                      disabled={!selectedVersionNumber || !compareVersionNumber}
                       className="mt-5"
                     >
                       <GitBranch size={16} className="mr-2" />
@@ -203,7 +209,7 @@ export default function VersionHistoryModal({
                     <div
                       key={version.id}
                       className={`border rounded-lg p-4 transition-colors ${
-                        selectedVersionId === version.id
+                        selectedVersionNumber === version.versionNumber
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -237,7 +243,7 @@ export default function VersionHistoryModal({
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => handleRevert(version.id)}
+                            onClick={() => handleRevert(version.versionNumber)}
                             disabled={reverting}
                           >
                             <RotateCcw size={16} className="mr-2" />
@@ -266,10 +272,10 @@ export default function VersionHistoryModal({
                       showDiffOnly={false}
                       useDarkTheme={false}
                       leftTitle={`Version ${
-                        versions.find((v) => v.id === compareVersionId)?.versionNumber
+                        versions.find((v) => v.versionNumber === compareVersionNumber)?.versionNumber
                       }`}
                       rightTitle={`Version ${
-                        versions.find((v) => v.id === selectedVersionId)?.versionNumber
+                        versions.find((v) => v.versionNumber === selectedVersionNumber)?.versionNumber
                       }`}
                     />
                   )}

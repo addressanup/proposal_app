@@ -120,29 +120,34 @@ export const proposalService = {
   // Versions
   async getVersions(proposalId: string) {
     const response = await api.get<{ success: boolean; data: ProposalVersion[] }>(
-      `/versions/proposal/${proposalId}`
+      `/proposals/${proposalId}/versions`
     );
     return response.data.data;
   },
 
-  async getVersion(versionId: string) {
+  async getVersion(proposalId: string, versionNumber: number) {
     const response = await api.get<{ success: boolean; data: ProposalVersion }>(
-      `/versions/${versionId}`
+      `/proposals/${proposalId}/versions/${versionNumber}`
     );
     return response.data.data;
   },
 
-  async compareVersions(versionId1: string, versionId2: string) {
+  async compareVersions(proposalId: string, versionNumber1: number, versionNumber2: number) {
     const response = await api.get<{ success: boolean; data: any }>(
-      `/versions/${versionId1}/compare/${versionId2}`
+      `/proposals/${proposalId}/versions/compare`,
+      {
+        params: {
+          version1: versionNumber1,
+          version2: versionNumber2,
+        },
+      }
     );
     return response.data.data;
   },
 
-  async revertToVersion(proposalId: string, versionId: string) {
+  async revertToVersion(proposalId: string, versionNumber: number) {
     const response = await api.post<{ success: boolean; data: Proposal }>(
-      `/versions/${versionId}/revert`,
-      { proposalId }
+      `/proposals/${proposalId}/versions/${versionNumber}/revert`
     );
     return response.data.data;
   },

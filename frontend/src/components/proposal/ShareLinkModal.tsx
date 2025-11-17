@@ -18,28 +18,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
-
-enum ShareLinkType {
-  PUBLIC = 'PUBLIC',
-  EMAIL_SPECIFIC = 'EMAIL_SPECIFIC',
-  ONE_TIME = 'ONE_TIME',
-  PASSWORD_PROTECTED = 'PASSWORD_PROTECTED',
-}
-
-interface ShareLink {
-  id: string;
-  proposalId: string;
-  linkType: ShareLinkType;
-  token: string;
-  expiresAt?: string;
-  recipientEmail?: string;
-  recipientName?: string;
-  canComment: boolean;
-  canDownload: boolean;
-  canSign: boolean;
-  viewCount: number;
-  createdAt: string;
-}
+import { sharingService, ShareLinkType, type ShareLink } from '../../services/sharing.service';
 
 interface ShareLinkModalProps {
   isOpen: boolean;
@@ -79,13 +58,11 @@ export default function ShareLinkModal({
   const loadLinks = async () => {
     try {
       setLoading(true);
-      // This would call the actual API endpoint
-      // const data = await sharingService.getProposalShareLinks(proposalId);
-      // setLinks(data);
-      // For now, showing empty state
-      setLinks([]);
+      const data = await sharingService.getProposalShareLinks(proposalId);
+      setLinks(data);
     } catch (error) {
       toast.error('Failed to load share links');
+      setLinks([]);
     } finally {
       setLoading(false);
     }
@@ -109,18 +86,20 @@ export default function ShareLinkModal({
 
     try {
       setCreating(true);
-      // This would call the actual API endpoint
-      // await sharingService.createShareLink(proposalId, {
-      //   linkType: formData.linkType,
-      //   recipientEmail: formData.recipientEmail,
-      //   recipientName: formData.recipientName,
-      //   password: formData.password,
-      //   expiresAt: new Date(Date.now() + formData.expiresInDays * 24 * 60 * 60 * 1000),
-      //   canComment: formData.canComment,
-      //   canDownload: formData.canDownload,
-      //   canSign: formData.canSign,
-      //   message: formData.message,
-      // });
+      await sharingService.createShareLink({
+        proposalId,
+        linkType: formData.linkType,
+        recipientEmail: formData.recipientEmail || undefined,
+        recipientName: formData.recipientName || undefined,
+        password: formData.password || undefined,
+        expiresAt: formData.linkType !== ShareLinkType.ONE_TIME
+          ? new Date(Date.now() + formData.expiresInDays * 24 * 60 * 60 * 1000)
+          : undefined,
+        canComment: formData.canComment,
+        canDownload: formData.canDownload,
+        canSign: formData.canSign,
+        message: formData.message || undefined,
+      });
       toast.success('Share link created successfully!');
       setShowCreateForm(false);
       setFormData({
@@ -154,7 +133,7 @@ export default function ShareLinkModal({
     }
 
     try {
-      // await sharingService.revokeShareLink(linkId);
+      await sharingService.revokeShareLink(linkId);
       toast.success('Share link revoked');
       loadLinks();
     } catch (error: any) {
