@@ -21,6 +21,8 @@ import CreateProposalPage from './pages/CreateProposalPage';
 import EditProposalPage from './pages/EditProposalPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import NotificationsPage from './pages/NotificationsPage';
+import OrganizationsPage from './pages/OrganizationsPage';
+import OrganizationDetailPage from './pages/OrganizationDetailPage';
 
 // Layout component with navigation
 function Layout({ children }: { children: React.ReactNode }) {
@@ -66,6 +68,12 @@ function Layout({ children }: { children: React.ReactNode }) {
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 >
                   Contracts
+                </Link>
+                <Link
+                  to="/organizations"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  Organizations
                 </Link>
               </div>
             </div>
@@ -230,6 +238,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/organizations"
+            element={
+              <ProtectedRoute>
+                <OrganizationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/organizations/:id"
+            element={
+              <ProtectedRoute>
+                <OrganizationDetailPage />
               </ProtectedRoute>
             }
           />
