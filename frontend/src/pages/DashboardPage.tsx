@@ -86,7 +86,7 @@ export default function DashboardPage() {
           <Button variant="secondary" onClick={() => navigate('/templates')}>
             Browse Templates
           </Button>
-          <Button onClick={() => navigate('/contracts/new')}>
+          <Button onClick={() => navigate('/contracts/create')}>
             Create Contract
           </Button>
         </div>
@@ -270,7 +270,7 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => navigate('/contracts/new')}
+            onClick={() => navigate('/contracts/create')}
             className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left transition-colors"
           >
             <div className="text-2xl mb-2">📝</div>
