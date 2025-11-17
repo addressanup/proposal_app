@@ -2,7 +2,6 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import authRoutes from './routes/auth.routes';
@@ -93,15 +92,6 @@ app.use('/api/contracts', contractRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/audit-logs', auditRoutes);
-
-// Serve frontend static files in production
-const publicPath = path.join(__dirname, '../public');
-app.use(express.static(publicPath));
-
-// Handle React Router - send all non-API requests to index.html
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(publicPath, 'index.html'));
-});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

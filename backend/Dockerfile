@@ -1,6 +1,6 @@
 # Multi-stage build for production
 
-# Stage 1: Build Backend and Frontend
+# Stage 1: Build Backend
 FROM node:18-slim AS builder
 
 WORKDIR /app
@@ -8,29 +8,20 @@ WORKDIR /app
 # Install OpenSSL for Prisma
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# Copy backend package files
-COPY backend/package*.json ./backend/
-COPY backend/prisma ./backend/prisma/
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
 
-# Install backend dependencies
-WORKDIR /app/backend
+# Install all dependencies (including dev for build)
 RUN npm ci && npm cache clean --force
 
-# Copy backend source code
-COPY backend ./
+# Copy source code
+COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
 # Build TypeScript
-RUN npm run build
-
-# Build Frontend
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci && npm cache clean --force
-
-COPY frontend ./
 RUN npm run build
 
 # Stage 2: Production
@@ -45,12 +36,11 @@ RUN apt-get update && apt-get install -y openssl dumb-init && rm -rf /var/lib/ap
 RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 
 # Copy built application from builder
-COPY --from=builder --chown=nodejs:nodejs /app/backend/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/backend/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/backend/prisma ./prisma
-COPY --from=builder --chown=nodejs:nodejs /app/backend/package*.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/backend/start.sh ./start.sh
-COPY --from=builder --chown=nodejs:nodejs /app/frontend/dist ./public
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/start.sh ./start.sh
 
 # Make start script executable
 RUN chmod +x start.sh
