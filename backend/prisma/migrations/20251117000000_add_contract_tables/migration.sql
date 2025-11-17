@@ -162,6 +162,7 @@ CREATE TABLE "counterparties" (
     "address" JSONB,
     "role" "PartyRole" NOT NULL,
     "signingAuthority" BOOLEAN NOT NULL DEFAULT false,
+    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
     "verified" BOOLEAN NOT NULL DEFAULT false,
     "verificationDate" TIMESTAMP(3),
     "verificationData" JSONB,
