@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store';
 import Button from './components/common/Button';
+import Toast from './components/common/Toast';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import NotificationsDropdown from './components/common/NotificationsDropdown';
 
 // Import pages
 import LoginPage from './pages/LoginPage';
@@ -12,6 +15,12 @@ import CreateTemplatePage from './pages/CreateTemplatePage';
 import ContractsPage from './pages/ContractsPage';
 import ContractDetailPage from './pages/ContractDetailPage';
 import CreateContractPage from './pages/CreateContractPage';
+import ProposalsPage from './pages/ProposalsPage';
+import ProposalDetailPage from './pages/ProposalDetailPage';
+import CreateProposalPage from './pages/CreateProposalPage';
+import EditProposalPage from './pages/EditProposalPage';
+import ProfileSettingsPage from './pages/ProfileSettingsPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 // Layout component with navigation
 function Layout({ children }: { children: React.ReactNode }) {
@@ -41,6 +50,12 @@ function Layout({ children }: { children: React.ReactNode }) {
                   Dashboard
                 </Link>
                 <Link
+                  to="/proposals"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  Proposals
+                </Link>
+                <Link
                   to="/templates"
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 >
@@ -56,13 +71,19 @@ function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-4">
               {user && (
-                <span className="text-sm text-gray-700">
-                  {user.firstName} {user.lastName}
-                </span>
+                <>
+                  <NotificationsDropdown />
+                  <Link
+                    to="/settings"
+                    className="text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    {user.firstName} {user.lastName}
+                  </Link>
+                  <Button variant="secondary" size="sm" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                </>
               )}
-              <Button variant="secondary" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
             </div>
           </div>
         </div>
@@ -87,81 +108,138 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Toast />
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/templates"
-          element={
-            <ProtectedRoute>
-              <TemplatesPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/templates"
+            element={
+              <ProtectedRoute>
+                <TemplatesPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/templates/create"
-          element={
-            <ProtectedRoute>
-              <CreateTemplatePage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/templates/create"
+            element={
+              <ProtectedRoute>
+                <CreateTemplatePage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/templates/:id"
-          element={
-            <ProtectedRoute>
-              <TemplateDetailPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/templates/:id"
+            element={
+              <ProtectedRoute>
+                <TemplateDetailPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/contracts"
-          element={
-            <ProtectedRoute>
-              <ContractsPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/contracts"
+            element={
+              <ProtectedRoute>
+                <ContractsPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/contracts/create"
-          element={
-            <ProtectedRoute>
-              <CreateContractPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/contracts/create"
+            element={
+              <ProtectedRoute>
+                <CreateContractPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/contracts/:id"
-          element={
-            <ProtectedRoute>
-              <ContractDetailPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/contracts/:id"
+            element={
+              <ProtectedRoute>
+                <ContractDetailPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/proposals"
+            element={
+              <ProtectedRoute>
+                <ProposalsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/proposals/create"
+            element={
+              <ProtectedRoute>
+                <CreateProposalPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/proposals/:id"
+            element={
+              <ProtectedRoute>
+                <ProposalDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/proposals/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditProposalPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <ProfileSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
