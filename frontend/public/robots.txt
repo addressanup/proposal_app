@@ -1,0 +1,33 @@
+# robots.txt for ContractFlow
+# This file tells search engines which pages to crawl
+
+User-agent: *
+Allow: /
+Allow: /#features
+Allow: /#benefits
+Allow: /#pricing
+Allow: /privacy
+Allow: /terms
+Allow: /faq
+Allow: /sitemap
+
+# Disallow authentication and user-specific pages
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /proposals
+Disallow: /contracts
+Disallow: /templates
+Disallow: /organizations
+Disallow: /settings
+Disallow: /notifications
+Disallow: /audit-logs
+Disallow: /reminders
+Disallow: /messages
+Disallow: /connections
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://contractflow.com/sitemap.xml
