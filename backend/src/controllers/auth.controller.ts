@@ -30,6 +30,13 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
 
     const user = await authService.register(data, ipAddress, userAgent);
 
+    // Generate tokens for newly registered user
+    const loginResult = await authService.login(
+      { email: data.email, password: data.password },
+      ipAddress,
+      userAgent
+    );
+
     // If shareToken is provided, handle auto-connection
     if (data.shareToken) {
       try {
@@ -81,7 +88,11 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
 
     res.status(201).json({
       status: 'success',
-      data: { user }
+      data: {
+        user: loginResult.user,
+        accessToken: loginResult.accessToken,
+        refreshToken: loginResult.refreshToken
+      }
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
