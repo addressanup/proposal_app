@@ -48,15 +48,20 @@ export const register = async (data: RegisterData, ipAddress: string, userAgent:
     }
   });
 
-  // Log registration
-  await auditLog({
-    userId: user.id,
-    action: 'USER_REGISTERED',
-    resourceType: 'user',
-    resourceId: user.id,
-    ipAddress,
-    userAgent
-  });
+  // Log registration (non-blocking - don't fail registration if audit fails)
+  try {
+    await auditLog({
+      userId: user.id,
+      action: 'USER_REGISTERED',
+      resourceType: 'user',
+      resourceId: user.id,
+      ipAddress,
+      userAgent
+    });
+  } catch (auditError) {
+    // Log error but don't fail registration
+    console.error('Audit logging failed during registration:', auditError);
+  }
 
   return user;
 };
