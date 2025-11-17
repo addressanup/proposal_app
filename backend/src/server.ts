@@ -34,20 +34,28 @@ const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : ['http://localhost:3000'];
 
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
     
+    // Check if origin is in allowed list
     if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
+      console.warn('⚠️ CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Body parsing middleware
