@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { proposalService } from '../services/proposal.service';
-import {
-  Proposal,
-  ProposalVersion,
-  Comment,
-  ProposalCollaborator,
-} from '../types/proposal.types';
+import { Proposal } from '../types/proposal.types';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Loading from '../components/common/Loading';
 import { toast } from '../components/common/Toast';
+import VersionHistoryModal from '../components/proposal/VersionHistoryModal';
+import CollaboratorModal from '../components/proposal/CollaboratorModal';
+import ShareLinkModal from '../components/proposal/ShareLinkModal';
+import CommentSection from '../components/proposal/CommentSection';
 import {
   ArrowLeft,
   Edit,
@@ -18,12 +17,13 @@ import {
   Share2,
   FileSignature,
   Clock,
-  MessageSquare,
   Users,
+  MessageSquare,
+  GitBranch,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-type TabType = 'content' | 'versions' | 'comments' | 'collaborators';
+type TabType = 'content' | 'comments';
 
 export default function ProposalDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,25 +31,17 @@ export default function ProposalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('content');
-  const [versions, setVersions] = useState<ProposalVersion[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [collaborators, setCollaborators] = useState<ProposalCollaborator[]>([]);
+
+  // Modal states
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showShareLink, setShowShareLink] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadProposal();
     }
   }, [id]);
-
-  useEffect(() => {
-    if (id && activeTab === 'versions') {
-      loadVersions();
-    } else if (id && activeTab === 'comments') {
-      loadComments();
-    } else if (id && activeTab === 'collaborators') {
-      loadCollaborators();
-    }
-  }, [activeTab, id]);
 
   const loadProposal = async () => {
     try {
@@ -61,33 +53,6 @@ export default function ProposalDetailPage() {
       navigate('/proposals');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadVersions = async () => {
-    try {
-      const data = await proposalService.getVersions(id!);
-      setVersions(data);
-    } catch (error: any) {
-      toast.error('Failed to load versions');
-    }
-  };
-
-  const loadComments = async () => {
-    try {
-      const data = await proposalService.getComments(id!);
-      setComments(data);
-    } catch (error: any) {
-      toast.error('Failed to load comments');
-    }
-  };
-
-  const loadCollaborators = async () => {
-    try {
-      const data = await proposalService.getCollaborators(id!);
-      setCollaborators(data);
-    } catch (error: any) {
-      toast.error('Failed to load collaborators');
     }
   };
 
@@ -148,12 +113,24 @@ export default function ProposalDetailPage() {
               <span>Updated {format(new Date(proposal.updatedAt), 'MMM d, yyyy')}</span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => navigate(`/proposals/${id}/edit`)}>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(`/proposals/${id}/edit`)}
+            >
               <Edit size={16} className="mr-2" />
               Edit
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={() => setShowVersionHistory(true)}>
+              <Clock size={16} className="mr-2" />
+              History
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowCollaborators(true)}>
+              <Users size={16} className="mr-2" />
+              Collaborators
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowShareLink(true)}>
               <Share2 size={16} className="mr-2" />
               Share
             </Button>
@@ -174,24 +151,13 @@ export default function ProposalDetailPage() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('content')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium text-sm inline-flex items-center ${
               activeTab === 'content'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             Content
-          </button>
-          <button
-            onClick={() => setActiveTab('versions')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm inline-flex items-center ${
-              activeTab === 'versions'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Clock size={16} className="mr-2" />
-            Versions
           </button>
           <button
             onClick={() => setActiveTab('comments')}
@@ -203,17 +169,6 @@ export default function ProposalDetailPage() {
           >
             <MessageSquare size={16} className="mr-2" />
             Comments
-          </button>
-          <button
-            onClick={() => setActiveTab('collaborators')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm inline-flex items-center ${
-              activeTab === 'collaborators'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Users size={16} className="mr-2" />
-            Collaborators
           </button>
         </nav>
       </div>
@@ -227,83 +182,31 @@ export default function ProposalDetailPage() {
           />
         )}
 
-        {activeTab === 'versions' && (
-          <div>
-            {versions.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No versions yet</p>
-            ) : (
-              <div className="space-y-4">
-                {versions.map((version) => (
-                  <div key={version.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">
-                        Version {version.versionNumber} - {version.title}
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {format(new Date(version.createdAt), 'MMM d, yyyy h:mm a')}
-                      </span>
-                    </div>
-                    {version.changeDescription && (
-                      <p className="text-sm text-gray-600 mb-2">{version.changeDescription}</p>
-                    )}
-                    <p className="text-xs text-gray-500">
-                      By {version.createdBy?.firstName} {version.createdBy?.lastName}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'comments' && (
-          <div>
-            {comments.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No comments yet</p>
-            ) : (
-              <div className="space-y-4">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-medium text-sm">
-                          {comment.user?.firstName} {comment.user?.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-700">{comment.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'collaborators' && (
-          <div>
-            {collaborators.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No collaborators yet</p>
-            ) : (
-              <div className="space-y-2">
-                {collaborators.map((collab) => (
-                  <div key={collab.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">
-                        {collab.user?.firstName} {collab.user?.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500">{collab.user?.email}</p>
-                    </div>
-                    <Badge color="blue">{collab.role}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === 'comments' && <CommentSection proposalId={id!} />}
       </div>
+
+      {/* Modals */}
+      <VersionHistoryModal
+        isOpen={showVersionHistory}
+        onClose={() => setShowVersionHistory(false)}
+        proposalId={id!}
+        currentTitle={proposal.title}
+        onRevert={loadProposal}
+      />
+
+      <CollaboratorModal
+        isOpen={showCollaborators}
+        onClose={() => setShowCollaborators(false)}
+        proposalId={id!}
+        proposalTitle={proposal.title}
+      />
+
+      <ShareLinkModal
+        isOpen={showShareLink}
+        onClose={() => setShowShareLink(false)}
+        proposalId={id!}
+        proposalTitle={proposal.title}
+      />
     </div>
   );
 }
