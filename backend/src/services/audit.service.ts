@@ -5,9 +5,10 @@ interface AuditLogData {
   action: string;
   resourceType: string;
   resourceId?: string;
-  ipAddress: string;
-  userAgent: string;
+  ipAddress?: string;
+  userAgent?: string;
   metadata?: Record<string, any>;
+  details?: Record<string, any>; // Alias for metadata for backward compatibility
 }
 
 export const auditLog = async (data: AuditLogData) => {
@@ -18,9 +19,9 @@ export const auditLog = async (data: AuditLogData) => {
         action: data.action,
         resourceType: data.resourceType,
         resourceId: data.resourceId,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-        metadata: data.metadata || {}
+        ipAddress: data.ipAddress || 'unknown',
+        userAgent: data.userAgent || 'unknown',
+        metadata: data.metadata || data.details || {}
       }
     });
   } catch (error) {
