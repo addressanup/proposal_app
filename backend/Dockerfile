@@ -1,12 +1,12 @@
 # Multi-stage build for production
 
 # Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Install OpenSSL 1.1 for Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Install OpenSSL for Prisma
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -25,15 +25,15 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 2: Production
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
 
-# Install OpenSSL 1.1 and dumb-init for proper signal handling
-RUN apk add --no-cache openssl1.1-compat dumb-init
+# Install OpenSSL for Prisma and dumb-init for proper signal handling
+RUN apt-get update && apt-get install -y openssl dumb-init && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 
 # Copy built application from builder
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
@@ -45,11 +45,11 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 USER nodejs
 
 # Expose port
-EXPOSE 5000
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
