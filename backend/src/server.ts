@@ -26,8 +26,11 @@ const PORT = process.env.PORT || 8080;
 // Trust proxy (needed for Railway, Vercel, and other platforms behind a proxy)
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configured for CORS compatibility
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
+}));
 
 // CORS configuration
 const allowedOrigins = process.env.FRONTEND_URL 
