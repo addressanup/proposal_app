@@ -21,7 +21,7 @@ import contractRoutes from './routes/contract.routes';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // Trust proxy (needed for Railway, Vercel, and other platforms behind a proxy)
 app.set('trust proxy', 1);
