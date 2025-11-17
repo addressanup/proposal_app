@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as versionService from '../services/version.service';
 import { AppError } from '../middleware/errorHandler';
 import { z } from 'zod';
+import { AuthRequest } from '../middleware/auth';
 
 // Validation schemas
 const createVersionSchema = z.object({
@@ -21,7 +22,7 @@ const compareVersionsSchema = z.object({
  * Create a new version of a proposal
  * POST /api/proposals/:proposalId/versions
  */
-export const createVersion = async (req: Request, res: Response) => {
+export const createVersion = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId } = req.params;
     const validatedData = createVersionSchema.parse({ ...req.body, proposalId });
@@ -54,7 +55,7 @@ export const createVersion = async (req: Request, res: Response) => {
  * Get version history for a proposal
  * GET /api/proposals/:proposalId/versions
  */
-export const getVersionHistory = async (req: Request, res: Response) => {
+export const getVersionHistory = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId } = req.params;
 
@@ -76,7 +77,7 @@ export const getVersionHistory = async (req: Request, res: Response) => {
  * Get a specific version
  * GET /api/proposals/:proposalId/versions/:versionNumber
  */
-export const getVersion = async (req: Request, res: Response) => {
+export const getVersion = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId, versionNumber } = req.params;
 
@@ -99,7 +100,7 @@ export const getVersion = async (req: Request, res: Response) => {
  * Compare two versions
  * GET /api/proposals/:proposalId/versions/compare?from=1&to=2
  */
-export const compareVersions = async (req: Request, res: Response) => {
+export const compareVersions = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId } = req.params;
     const { from, to } = req.query;
@@ -132,7 +133,7 @@ export const compareVersions = async (req: Request, res: Response) => {
  * Revert to a specific version
  * POST /api/proposals/:proposalId/versions/:versionNumber/revert
  */
-export const revertToVersion = async (req: Request, res: Response) => {
+export const revertToVersion = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId, versionNumber } = req.params;
     const ipAddress = req.ip || req.connection.remoteAddress || '';
@@ -160,7 +161,7 @@ export const revertToVersion = async (req: Request, res: Response) => {
  * Get version statistics
  * GET /api/proposals/:proposalId/versions/statistics
  */
-export const getVersionStatistics = async (req: Request, res: Response) => {
+export const getVersionStatistics = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId } = req.params;
 

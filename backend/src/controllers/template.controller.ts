@@ -1,12 +1,13 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as templateService from '../services/template.service';
 import { ContractType, ContractCategory } from '@prisma/client';
+import { AuthRequest } from '../middleware/auth';
 
 // ============================================================================
 // CREATE TEMPLATE
 // ============================================================================
 
-export const createTemplate = async (req: Request, res: Response) => {
+export const createTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
@@ -40,7 +41,7 @@ export const createTemplate = async (req: Request, res: Response) => {
 // GET TEMPLATE
 // ============================================================================
 
-export const getTemplate = async (req: Request, res: Response) => {
+export const getTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -75,7 +76,7 @@ export const getTemplate = async (req: Request, res: Response) => {
 // LIST TEMPLATES
 // ============================================================================
 
-export const listTemplates = async (req: Request, res: Response) => {
+export const listTemplates = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
 
@@ -143,7 +144,7 @@ export const listTemplates = async (req: Request, res: Response) => {
 // UPDATE TEMPLATE
 // ============================================================================
 
-export const updateTemplate = async (req: Request, res: Response) => {
+export const updateTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -179,7 +180,7 @@ export const updateTemplate = async (req: Request, res: Response) => {
 // DELETE TEMPLATE
 // ============================================================================
 
-export const deleteTemplate = async (req: Request, res: Response) => {
+export const deleteTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -209,7 +210,7 @@ export const deleteTemplate = async (req: Request, res: Response) => {
 // CLONE TEMPLATE
 // ============================================================================
 
-export const cloneTemplate = async (req: Request, res: Response) => {
+export const cloneTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -255,7 +256,7 @@ export const cloneTemplate = async (req: Request, res: Response) => {
 // CREATE TEMPLATE VERSION
 // ============================================================================
 
-export const createTemplateVersion = async (req: Request, res: Response) => {
+export const createTemplateVersion = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -291,7 +292,7 @@ export const createTemplateVersion = async (req: Request, res: Response) => {
 // PREVIEW TEMPLATE
 // ============================================================================
 
-export const previewTemplate = async (req: Request, res: Response) => {
+export const previewTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
@@ -328,7 +329,7 @@ export const previewTemplate = async (req: Request, res: Response) => {
 // GET TEMPLATE USAGE STATS
 // ============================================================================
 
-export const getTemplateUsageStats = async (req: Request, res: Response) => {
+export const getTemplateUsageStats = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;

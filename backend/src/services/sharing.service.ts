@@ -1,7 +1,7 @@
 import { PrismaClient, ShareLinkType, LinkAction } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 

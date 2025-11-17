@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as signatureService from '../services/signature.service';
 import { AppError } from '../middleware/errorHandler';
 import { z } from 'zod';
 import { SignatureType, SigningOrder, AuthMethod } from '@prisma/client';
+import { AuthRequest } from '../middleware/auth';
 
 // Validation schemas
 const createSignatureRequestSchema = z.object({
@@ -32,7 +33,7 @@ const declineSignatureSchema = z.object({
  * Create a signature request
  * POST /api/signature-requests
  */
-export const createSignatureRequest = async (req: Request, res: Response) => {
+export const createSignatureRequest = async (req: AuthRequest, res: Response) => {
   try {
     const validatedData = createSignatureRequestSchema.parse(req.body);
     const ipAddress = req.ip || req.connection.remoteAddress || '';
@@ -62,7 +63,7 @@ export const createSignatureRequest = async (req: Request, res: Response) => {
  * Verify signer token (public endpoint)
  * GET /api/sign/verify/:token
  */
-export const verifySignerToken = async (req: Request, res: Response) => {
+export const verifySignerToken = async (req: AuthRequest, res: Response) => {
   try {
     const { token } = req.params;
 
@@ -81,7 +82,7 @@ export const verifySignerToken = async (req: Request, res: Response) => {
  * Sign the document (public endpoint)
  * POST /api/sign/:token
  */
-export const signDocument = async (req: Request, res: Response) => {
+export const signDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { token } = req.params;
     const validatedData = signDocumentSchema.parse(req.body);
@@ -115,7 +116,7 @@ export const signDocument = async (req: Request, res: Response) => {
  * Decline to sign (public endpoint)
  * POST /api/sign/:token/decline
  */
-export const declineSignature = async (req: Request, res: Response) => {
+export const declineSignature = async (req: AuthRequest, res: Response) => {
   try {
     const { token } = req.params;
     const validatedData = declineSignatureSchema.parse(req.body);
@@ -146,7 +147,7 @@ export const declineSignature = async (req: Request, res: Response) => {
  * Get signature request details
  * GET /api/signature-requests/:id
  */
-export const getSignatureRequest = async (req: Request, res: Response) => {
+export const getSignatureRequest = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -168,7 +169,7 @@ export const getSignatureRequest = async (req: Request, res: Response) => {
  * Get all signature requests for a proposal
  * GET /api/proposals/:proposalId/signature-requests
  */
-export const getProposalSignatureRequests = async (req: Request, res: Response) => {
+export const getProposalSignatureRequests = async (req: AuthRequest, res: Response) => {
   try {
     const { proposalId } = req.params;
 
@@ -190,7 +191,7 @@ export const getProposalSignatureRequests = async (req: Request, res: Response) 
  * Send reminder to pending signers
  * POST /api/signature-requests/:id/remind
  */
-export const sendSignatureReminder = async (req: Request, res: Response) => {
+export const sendSignatureReminder = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -212,7 +213,7 @@ export const sendSignatureReminder = async (req: Request, res: Response) => {
  * Cancel signature request
  * POST /api/signature-requests/:id/cancel
  */
-export const cancelSignatureRequest = async (req: Request, res: Response) => {
+export const cancelSignatureRequest = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const ipAddress = req.ip || req.connection.remoteAddress || '';

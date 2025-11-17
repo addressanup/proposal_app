@@ -235,18 +235,16 @@ export const getProposalById = async (proposalId: string, userId: string) => {
       signatureRequests: {
         orderBy: { createdAt: 'desc' },
         include: {
-          signatures: {
-            include: {
-              signer: {
-                select: {
-                  id: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true
-                }
-              }
-            },
-            orderBy: { signingOrder: 'asc' }
+          signers: {
+            orderBy: { signingOrder: 'asc' },
+            select: {
+              signerEmail: true,
+              signerName: true,
+              signingOrder: true,
+              status: true,
+              signedAt: true,
+              declineReason: true
+            }
           },
           createdBy: {
             select: {

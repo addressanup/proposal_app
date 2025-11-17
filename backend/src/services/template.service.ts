@@ -654,6 +654,129 @@ export const duplicateTemplate = async (
   return duplicate;
 };
 
+/**
+ * Clone template (alias with audit logging)
+ */
+export const cloneTemplate = async (
+  templateId: string,
+  name: string,
+  userId: string,
+  organizationId: string | undefined,
+  ipAddress: string,
+  userAgent: string
+) => {
+  const cloned = await duplicateTemplate(templateId, name, userId, organizationId);
+  await auditLog({
+    userId,
+    action: 'TEMPLATE_CLONED',
+    resourceType: 'template',
+    resourceId: cloned.id,
+    ipAddress,
+    userAgent,
+    metadata: { fromTemplateId: templateId, name }
+  });
+  return cloned;
+};
+
+/**
+ * Create a new template version (explicit endpoint)
+ */
+export const createTemplateVersion = async (
+  templateId: string,
+  data: Partial<CreateTemplateData>,
+  userId: string,
+  ipAddress: string,
+  userAgent: string
+) => {
+  const base = await getTemplateById(templateId, userId);
+
+  const newVersion = await prisma.contractTemplate.create({
+    data: {
+      name: data.name || base.name,
+      description: data.description ?? base.description,
+      contractType: data.contractType || base.contractType,
+      category: data.category || base.category,
+      subcategory: data.subcategory ?? base.subcategory,
+      organizationId: base.organizationId,
+      isGlobal: false,
+      content: data.content || base.content,
+      structure: data.structure || (base.structure as any),
+      requiredFields: data.requiredFields || (base.requiredFields as any),
+      optionalFields: data.optionalFields || (base.optionalFields as any),
+      conditionalFields: data.conditionalFields || (base.conditionalFields as any),
+      formatting: data.formatting || (base.formatting as any),
+      headerFooter: data.headerFooter || (base.headerFooter as any),
+      jurisdiction: data.jurisdiction || base.jurisdiction,
+      governingLaw: data.governingLaw || base.governingLaw,
+      language: base.language,
+      tags: data.tags || base.tags,
+      industry: data.industry || base.industry,
+      createdBy: userId,
+      version: (base as any).version + 1,
+      parentTemplateId: base.id,
+      clauses: {
+        create: (await prisma.templateClause.findMany({ where: { templateId: base.id } })).map(
+          c => ({
+            name: c.name,
+            category: c.category,
+            content: c.content,
+            section: c.section,
+            position: c.position,
+            isRequired: c.isRequired,
+            alternatives: c.alternatives as any,
+            fallbackClause: c.fallbackClause || undefined,
+            riskLevel: c.riskLevel,
+            favorability: c.favorability,
+            complianceFlags: c.complianceFlags as any,
+            regulatoryRefs: c.regulatoryRefs as any,
+            recommendedFor: c.recommendedFor as any,
+            keywords: c.keywords as any
+          })
+        )
+      }
+    },
+    include: {
+      clauses: true,
+      creator: {
+        select: { id: true, email: true, firstName: true, lastName: true }
+      }
+    }
+  });
+
+  await auditLog({
+    userId,
+    action: 'TEMPLATE_VERSION_CREATED',
+    resourceType: 'template',
+    resourceId: newVersion.id,
+    ipAddress,
+    userAgent,
+    metadata: { fromTemplateId: templateId, version: newVersion.version }
+  });
+
+  return newVersion;
+};
+
+/**
+ * Basic usage stats for a template
+ */
+export const getTemplateUsageStats = async (templateId: string, userId: string) => {
+  // Access check via getTemplateById (throws if not allowed)
+  await getTemplateById(templateId, userId);
+
+  const totalContracts = await prisma.contract.count({ where: { templateId } });
+  const last30Days = await prisma.contract.count({
+    where: {
+      templateId,
+      createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+    }
+  });
+
+  return {
+    totalContracts,
+    last30Days
+  };
+};
+
 // ============================================================================
 // TEMPLATE POPULATION (CONTRACT CREATION FROM TEMPLATE)
 // ============================================================================

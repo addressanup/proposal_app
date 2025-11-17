@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await api.post('/auth/login', { email, password });
-          const { user, accessToken } = response.data;
+          const { user, accessToken } = response.data?.data || response.data;
 
           localStorage.setItem('accessToken', accessToken);
           set({
@@ -70,16 +70,33 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await api.post('/auth/register', data);
-          const { user, accessToken } = response.data;
+          const { user, accessToken } = response.data?.data || response.data;
 
-          localStorage.setItem('accessToken', accessToken);
-          set({
-            user,
-            accessToken,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
+          if (accessToken) {
+            localStorage.setItem('accessToken', accessToken);
+            set({
+              user,
+              accessToken,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            // Fallback: immediately log the user in if register did not return tokens
+            const loginResp = await api.post('/auth/login', {
+              email: data.email,
+              password: data.password,
+            });
+            const loginData = loginResp.data?.data || loginResp.data;
+            localStorage.setItem('accessToken', loginData.accessToken);
+            set({
+              user: loginData.user,
+              accessToken: loginData.accessToken,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+          }
         } catch (error: any) {
           set({
             error: error.response?.data?.error || 'Registration failed',
@@ -121,8 +138,9 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await api.get('/auth/profile');
+          const { user } = response.data?.data || response.data;
           set({
-            user: response.data.user,
+            user,
             isAuthenticated: true,
             accessToken: token,
           });

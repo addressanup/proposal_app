@@ -6,7 +6,7 @@ import { getProposalForSignature, hasActiveSignatureRequests } from './proposal.
 import { SignatureType, SigningOrder, SignatureRequestStatus, SignerStatus, AuthMethod } from '@prisma/client';
 import { canCreateSignatureRequest } from '../utils/validators';
 import crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 interface SignerRequirement {
   signerEmail: string;
@@ -129,9 +129,9 @@ export const createSignatureRequest = async (
       await sendSignatureRequestEmail(
         firstSigner.signerEmail,
         firstSigner.signerName,
-        proposal.title,
-        proposal.creator.firstName + ' ' + proposal.creator.lastName,
-        firstSigner.authToken
+        signatureRequest.proposal.title,
+        `${signatureRequest.proposal.creator.firstName} ${signatureRequest.proposal.creator.lastName}`,
+        firstSigner.authToken || ''
       );
 
       await prisma.signatureRequirement.update({
@@ -145,9 +145,9 @@ export const createSignatureRequest = async (
       await sendSignatureRequestEmail(
         signer.signerEmail,
         signer.signerName,
-        proposal.title,
-        proposal.creator.firstName + ' ' + proposal.creator.lastName,
-        signer.authToken
+        signatureRequest.proposal.title,
+        `${signatureRequest.proposal.creator.firstName} ${signatureRequest.proposal.creator.lastName}`,
+        signer.authToken || ''
       );
 
       await prisma.signatureRequirement.update({
@@ -280,7 +280,6 @@ export const signDocument = async (
 
   // Audit log
   await auditLog({
-    userId: null,
     action: 'DOCUMENT_SIGNED',
     resourceType: 'signature',
     resourceId: signature.id,
@@ -318,7 +317,7 @@ export const signDocument = async (
         nextSigner.signerName,
         requirement.request.proposal.title,
         requirement.signerName,
-        nextSigner.authToken
+        nextSigner.authToken || ''
       );
 
       await prisma.signatureRequirement.update({
@@ -387,7 +386,6 @@ export const declineSignature = async (
 
   // Audit log
   await auditLog({
-    userId: null,
     action: 'SIGNATURE_DECLINED',
     resourceType: 'signature_request',
     resourceId: requirement.requestId,
@@ -694,7 +692,7 @@ export const sendSignatureReminder = async (requestId: string, userId: string) =
       signer.signerEmail,
       signer.signerName,
       request.proposal.title,
-      signer.authToken
+      signer.authToken || ''
     );
   }
 
