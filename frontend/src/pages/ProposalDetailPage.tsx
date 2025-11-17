@@ -9,7 +9,10 @@ import { toast } from '../components/common/Toast';
 import VersionHistoryModal from '../components/proposal/VersionHistoryModal';
 import CollaboratorModal from '../components/proposal/CollaboratorModal';
 import ShareLinkModal from '../components/proposal/ShareLinkModal';
+import SignatureRequestModal from '../components/proposal/SignatureRequestModal';
 import CommentSection from '../components/proposal/CommentSection';
+import DocumentUpload from '../components/proposal/DocumentUpload';
+import { exportProposalToPDF } from '../utils/pdfExport';
 import {
   ArrowLeft,
   Edit,
@@ -19,11 +22,12 @@ import {
   Clock,
   Users,
   MessageSquare,
-  GitBranch,
+  Download,
+  Paperclip,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-type TabType = 'content' | 'comments';
+type TabType = 'content' | 'comments' | 'documents';
 
 export default function ProposalDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +40,7 @@ export default function ProposalDetailPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showShareLink, setShowShareLink] = useState(false);
+  const [showSignatureRequest, setShowSignatureRequest] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -67,6 +72,22 @@ export default function ProposalDetailPage() {
       navigate('/proposals');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to delete proposal');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!proposal) return;
+
+    try {
+      await exportProposalToPDF(proposal.title, proposal.content, {
+        author: `${proposal.creator?.firstName} ${proposal.creator?.lastName}`,
+        status: proposal.status,
+        createdDate: format(new Date(proposal.createdAt), 'MMMM d, yyyy'),
+        version: proposal.currentVersion || 1,
+      });
+      toast.success('PDF exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export PDF');
     }
   };
 
@@ -134,9 +155,13 @@ export default function ProposalDetailPage() {
               <Share2 size={16} className="mr-2" />
               Share
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={() => setShowSignatureRequest(true)}>
               <FileSignature size={16} className="mr-2" />
-              Sign
+              Signatures
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleExportPDF}>
+              <Download size={16} className="mr-2" />
+              Export PDF
             </Button>
             <Button variant="secondary" size="sm" onClick={handleDelete}>
               <Trash2 size={16} className="mr-2" />
@@ -170,6 +195,17 @@ export default function ProposalDetailPage() {
             <MessageSquare size={16} className="mr-2" />
             Comments
           </button>
+          <button
+            onClick={() => setActiveTab('documents')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm inline-flex items-center ${
+              activeTab === 'documents'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Paperclip size={16} className="mr-2" />
+            Documents
+          </button>
         </nav>
       </div>
 
@@ -183,6 +219,10 @@ export default function ProposalDetailPage() {
         )}
 
         {activeTab === 'comments' && <CommentSection proposalId={id!} />}
+
+        {activeTab === 'documents' && (
+          <DocumentUpload proposalId={id!} existingDocuments={[]} />
+        )}
       </div>
 
       {/* Modals */}
@@ -204,6 +244,13 @@ export default function ProposalDetailPage() {
       <ShareLinkModal
         isOpen={showShareLink}
         onClose={() => setShowShareLink(false)}
+        proposalId={id!}
+        proposalTitle={proposal.title}
+      />
+
+      <SignatureRequestModal
+        isOpen={showSignatureRequest}
+        onClose={() => setShowSignatureRequest(false)}
         proposalId={id!}
         proposalTitle={proposal.title}
       />
